@@ -1,0 +1,11 @@
+.bender
+transcript
+*.wlf
+work/
+modelsim.ini
+.nfs*
+*.vstf
+wlf*
+
+# scripts
+scripts/compile.tcl
