@@ -30,6 +30,7 @@ module axi_rt_unit #(
   parameter type         addr_t         = logic,
   parameter type         aw_chan_t      = logic,
   parameter type         w_chan_t       = logic,
+  parameter type         ar_chan_t      = logic,
   parameter type         axi_req_t      = logic,
   parameter type         axi_resp_t     = logic,
   // dependent
@@ -228,7 +229,9 @@ module axi_rt_unit #(
     .IdWidth      ( IdWidth    ),
     .UserWidth    ( UserWidth  ),
     .axi_req_t    ( axi_req_t  ),
-    .axi_resp_t   ( axi_resp_t )
+    .axi_resp_t   ( axi_resp_t ),
+    .axi_aw_chan_t( aw_chan_t  ),
+    .axi_ar_chan_t( ar_chan_t  )
   ) i_axi_gran_burst_splitter (
     .clk_i,
     .rst_ni,
@@ -365,93 +368,5 @@ module axi_rt_unit #(
   assign fwd_resp   = rt_bypassed_q ? '0         : mst_resp_i;
   assign iso_resp   = rt_bypassed_q ? mst_resp_i : mux_resp;
   assign mux_req    = rt_bypassed_q ? '0         : iso_req;
-
-endmodule
-
-
-
-/// Counter unit of RT unit
-module ax_rt_unit_counter #(
-  parameter int unsigned PeriodWidth = 32'd0,
-  parameter int unsigned BudgetWidth = 32'd0,
-  parameter type         ax_bytes_t  = logic,
-  parameter type         period_t    = logic[PeriodWidth-1:0],
-  parameter type         budget_t    = logic[BudgetWidth-1:0]
-)(
-  input  logic      clk_i,
-  input  logic      rst_ni,
-  input  ax_bytes_t ax_bytes_i,
-  input  logic      ax_happening_i,
-  input  logic      enable_i,
-  input  budget_t   budget_i,
-  output budget_t   budget_left_o,
-  output logic      budget_spent_o,
-  input  period_t   period_i,
-  output period_t   period_left_o,
-  input  logic      period_abort_i
-);
-
-  // --------------------------------------------------
-  // Period Tracking
-  // --------------------------------------------------
-  logic period_over;
-  logic period_load;
-
-  period_t static_delat_one = 'd1;
-
-  delta_counter #(
-    .WIDTH           ( PeriodWidth ),
-    .STICKY_OVERFLOW ( 1'b0        )
-  ) i_delta_counter_period (
-    .clk_i,
-    .rst_ni,
-    .clear_i   ( 1'b0                ),
-    .en_i      ( enable_i            ),
-    .load_i    ( period_load         ),
-    .down_i    ( 1'b1                ),
-    .delta_i   ( static_delat_one    ),
-    .d_i       ( period_i            ),
-    .q_o       ( period_left_o       ),
-    .overflow_o( /* NOT CONNECTED */ )
-  );
-
-  // load period new
-  assign period_load = period_over | period_abort_i;
-
-  // period expired
-  assign period_over = (period_left_o == '0);
-
-
-  // --------------------------------------------------
-  // Budget Tracking
-  // --------------------------------------------------
-  budget_t bytes_spent;
-  logic    budget_en;
-  logic    budget_overflow;
-
-  delta_counter #(
-    .WIDTH           ( BudgetWidth ),
-    .STICKY_OVERFLOW ( 1'b0        )
-  ) i_delta_counter_budget (
-    .clk_i,
-    .rst_ni,
-    .clear_i   ( 1'b0            ),
-    .en_i      ( budget_en       ),
-    .load_i    ( period_over     ),
-    .down_i    ( 1'b1            ),
-    .delta_i   ( bytes_spent     ),
-    .d_i       ( budget_i        ),
-    .q_o       ( budget_left_o   ),
-    .overflow_o( budget_overflow )
-  );
-
-  // explicit cast
-  assign bytes_spent = budget_t'(ax_bytes_i);
-
-  // enable budget counter
-  assign budget_en = enable_i & !budget_spent_o & ax_happening_i;
-
-  // no more budget left :(
-  assign budget_spent_o = (budget_left_o == '0) | budget_overflow;
 
 endmodule

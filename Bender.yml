@@ -11,8 +11,8 @@ export_include_dirs:
   - include
 
 dependencies:
-  common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.27.0        }
-  axi:          { git: "https://github.com/pulp-platform/axi.git",          version: 0.39.0-beta.9 }
+  common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.27.0         }
+  axi:          { git: "https://github.com/pulp-platform/axi.git",          version: 0.39.0-beta.10 }
 
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this
@@ -22,9 +22,14 @@ sources:
   - target: rtl
     files:
       # Level 0
+      - src/axi_gran_burst_splitter_counters.sv
+      - src/axi_rt_unit_counter.sv
+      # Level 1
+      - src/axi_gran_burst_splitter_ax_chan.sv
+      # Level 2
       - src/axi_gran_burst_splitter.sv
       - src/axi_write_buffer.sv
-      # Level 1
+      # Level 3
       - src/axi_rt_unit.sv
 
   - target: test

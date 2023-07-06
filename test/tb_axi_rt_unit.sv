@@ -303,6 +303,7 @@ module tb_axi_rt_unit #(
       .rt_rule_t      ( rt_rule_t        ),
       .addr_t         ( addr_t           ),
       .aw_chan_t      ( axi_aw_chan_t    ),
+      .ar_chan_t      ( axi_ar_chan_t    ),
       .w_chan_t       ( axi_w_chan_t     ),
       .axi_req_t      ( axi_req_t        ),
       .axi_resp_t     ( axi_resp_t       )

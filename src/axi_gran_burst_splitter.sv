@@ -1,4 +1,4 @@
-// Copyright (c) 2020 ETH Zurich, University of Bologna
+// Copyright (c) 2023 ETH Zurich, University of Bologna
 //
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the "License"); you may not use this file except in
@@ -10,8 +10,6 @@
 // specific language governing permissions and limitations under the License.
 //
 // Authors:
-// - Wolfgang Roenninger <wroennin@iis.ee.ethz.ch>
-// - Andreas Kurth <akurth@iis.ee.ethz.ch>
 // - Thomas Benz <tbenz@iis.ee.ethz.ch>
 
 `include "axi/typedef.svh"
@@ -28,16 +26,18 @@
 ///   modules can generate ATOPs.
 module axi_gran_burst_splitter #(
   // Maximum number of AXI read bursts outstanding at the same time
-  parameter int unsigned MaxReadTxns  = 32'd0,
+  parameter int unsigned MaxReadTxns   = 32'd0,
   // Maximum number of AXI write bursts outstanding at the same time
-  parameter int unsigned MaxWriteTxns = 32'd0,
+  parameter int unsigned MaxWriteTxns  = 32'd0,
   // AXI Bus Types
-  parameter int unsigned AddrWidth    = 32'd0,
-  parameter int unsigned DataWidth    = 32'd0,
-  parameter int unsigned IdWidth      = 32'd0,
-  parameter int unsigned UserWidth    = 32'd0,
-  parameter type         axi_req_t    = logic,
-  parameter type         axi_resp_t   = logic
+  parameter int unsigned AddrWidth     = 32'd0,
+  parameter int unsigned DataWidth     = 32'd0,
+  parameter int unsigned IdWidth       = 32'd0,
+  parameter int unsigned UserWidth     = 32'd0,
+  parameter type         axi_req_t     = logic,
+  parameter type         axi_resp_t    = logic,
+  parameter type         axi_aw_chan_t = logic,
+  parameter type         axi_ar_chan_t = logic
 ) (
   input  logic  clk_i,
   input  logic  rst_ni,
@@ -54,39 +54,18 @@ module axi_gran_burst_splitter #(
   input  axi_resp_t mst_resp_i
 );
 
-  typedef logic [AddrWidth-1:0]   addr_t;
-  typedef logic [DataWidth-1:0]   data_t;
-  typedef logic [IdWidth-1:0]     id_t;
-  typedef logic [DataWidth/8-1:0] strb_t;
-  typedef logic [UserWidth-1:0]   user_t;
-  `AXI_TYPEDEF_AW_CHAN_T(aw_chan_t, addr_t, id_t, user_t)
-  `AXI_TYPEDEF_W_CHAN_T(w_chan_t, data_t, strb_t, user_t)
-  `AXI_TYPEDEF_B_CHAN_T(b_chan_t, id_t, user_t)
-  `AXI_TYPEDEF_AR_CHAN_T(ar_chan_t, addr_t, id_t, user_t)
-  `AXI_TYPEDEF_R_CHAN_T(r_chan_t, data_t, id_t, user_t)
-
   // Demultiplex between supported and unsupported transactions.
   axi_req_t   act_req,  unsupported_req;
   axi_resp_t  act_resp, unsupported_resp;
   logic sel_aw_unsupported, sel_ar_unsupported;
   localparam int unsigned MaxTxns = (MaxReadTxns > MaxWriteTxns) ? MaxReadTxns : MaxWriteTxns;
-  axi_demux #(
+  axi_demux_simple #(
     .AxiIdWidth   ( IdWidth     ),
-    .aw_chan_t    ( aw_chan_t   ),
-    .w_chan_t     ( w_chan_t    ),
-    .b_chan_t     ( b_chan_t    ),
-    .ar_chan_t    ( ar_chan_t   ),
-    .r_chan_t     ( r_chan_t    ),
     .axi_req_t    ( axi_req_t   ),
     .axi_resp_t   ( axi_resp_t  ),
     .NoMstPorts   ( 2           ),
     .MaxTrans     ( MaxTxns     ),
-    .AxiLookBits  ( IdWidth     ),
-    .SpillAw      ( 1'b0        ),
-    .SpillW       ( 1'b0        ),
-    .SpillB       ( 1'b0        ),
-    .SpillAr      ( 1'b0        ),
-    .SpillR       ( 1'b0        )
+    .AxiLookBits  ( IdWidth     )
   ) i_demux_supported_vs_unsupported (
     .clk_i,
     .rst_ni,
@@ -141,9 +120,9 @@ module axi_gran_burst_splitter #(
   logic           w_cnt_dec, w_cnt_req, w_cnt_gnt, w_cnt_err;
   axi_pkg::len_t  w_cnt_len;
   axi_gran_burst_splitter_ax_chan #(
-    .chan_t   ( aw_chan_t    ),
-    .IdWidth  ( IdWidth      ),
-    .MaxTxns  ( MaxWriteTxns )
+    .chan_t   ( axi_aw_chan_t ),
+    .IdWidth  ( IdWidth       ),
+    .MaxTxns  ( MaxWriteTxns  )
   ) i_axi_gran_burst_splitter_aw_chan (
     .clk_i,
     .rst_ni,
@@ -276,9 +255,9 @@ module axi_gran_burst_splitter #(
   logic           r_cnt_dec, r_cnt_req, r_cnt_gnt;
   axi_pkg::len_t  r_cnt_len;
   axi_gran_burst_splitter_ax_chan #(
-    .chan_t   ( ar_chan_t   ),
-    .IdWidth  ( IdWidth     ),
-    .MaxTxns  ( MaxReadTxns )
+    .chan_t   ( axi_ar_chan_t ),
+    .IdWidth  ( IdWidth       ),
+    .MaxTxns  ( MaxReadTxns   )
   ) i_axi_gran_burst_splitter_ar_chan (
     .clk_i,
     .rst_ni,
@@ -397,276 +376,6 @@ module axi_gran_burst_splitter #(
     else $fatal(1, "AW burst longer than a single beat emitted!");
   assert property (@(posedge clk_i) mst_req_o.ar_valid |-> mst_req_o.ar.len <= len_limit_i)
     else $fatal(1, "AR burst longer than a single beat emitted!");
-  // pragma translate_on
-  `endif
-
-endmodule
-
-/// Internal module of [`axi_gran_burst_splitter`](module.axi_gran_burst_splitter) to control Ax channels.
-///
-/// Store burst lengths in counters, which are associated to AXI IDs through ID queues (to allow
-/// reordering of responses w.r.t. requests).
-module axi_gran_burst_splitter_ax_chan #(
-  parameter type         chan_t  = logic,
-  parameter int unsigned IdWidth = 0,
-  parameter int unsigned MaxTxns = 0,
-  parameter type         id_t    = logic[IdWidth-1:0]
-) (
-  input  logic          clk_i,
-  input  logic          rst_ni,
-
-  // length
-  input  axi_pkg::len_t len_limit_i,
-
-  input  chan_t         ax_i,
-  input  logic          ax_valid_i,
-  output logic          ax_ready_o,
-  output chan_t         ax_o,
-  output logic          ax_valid_o,
-  input  logic          ax_ready_i,
-
-  input  id_t           cnt_id_i,
-  output axi_pkg::len_t cnt_len_o,
-  input  logic          cnt_set_err_i,
-  output logic          cnt_err_o,
-  input  logic          cnt_dec_i,
-  input  logic          cnt_req_i,
-  output logic          cnt_gnt_o
-);
-  typedef logic[IdWidth-1:0]           cnt_id_t;
-  typedef logic[axi_pkg::LenWidth:0] num_beats_t;
-
-  chan_t      ax_d, ax_q;
-  // keep the number of remaining beats. != len
-  num_beats_t num_beats_d, num_beats_q;
-  // maximum number of beats to subtract in one go
-  num_beats_t max_beats;
-
-
-  logic cnt_alloc_req, cnt_alloc_gnt;
-  axi_gran_burst_splitter_counters #(
-    .MaxTxns ( MaxTxns  ),
-    .IdWidth ( IdWidth  )
-  ) i_axi_gran_burst_splitter_counters (
-    .clk_i,
-    .rst_ni,
-    .alloc_id_i     ( ax_i.id       ),
-    .alloc_len_i    ( ax_i.len      ),
-    .alloc_req_i    ( cnt_alloc_req ),
-    .alloc_gnt_o    ( cnt_alloc_gnt ),
-    .cnt_id_i       ( cnt_id_i      ),
-    .cnt_len_o      ( cnt_len_o     ),
-    .cnt_set_err_i  ( cnt_set_err_i ),
-    .cnt_err_o      ( cnt_err_o     ),
-    .cnt_dec_i      ( cnt_dec_i     ),
-    .cnt_delta_i    ( max_beats     ),
-    .cnt_req_i      ( cnt_req_i     ),
-    .cnt_gnt_o      ( cnt_gnt_o     )
-  );
-
-  // assign the max_beats depending on the limit value. Limit value is given as an AXI len.
-  // limit = 0 means one beat each AX
-  assign max_beats = {1'b0, len_limit_i} + 9'h001;
-
-  enum logic {Idle, Busy} state_d, state_q;
-  always_comb begin
-    cnt_alloc_req = 1'b0;
-    ax_d          = ax_q;
-    state_d       = state_q;
-    num_beats_d   = num_beats_q;
-    ax_o          = '0;
-    ax_valid_o    = 1'b0;
-    ax_ready_o    = 1'b0;
-    unique case (state_q)
-      Idle: begin
-        if (ax_valid_i && cnt_alloc_gnt) begin
-
-          // No splitting required -> feed through.
-          if (ax_i.len <= len_limit_i) begin
-            ax_o          = ax_i;
-            ax_valid_o    = 1'b1;
-            // As soon as downstream is ready, allocate a counter and acknowledge upstream.
-            if (ax_ready_i) begin
-              cnt_alloc_req = 1'b1;
-              ax_ready_o    = 1'b1;
-            end
-
-          // Splitting required.
-          end else begin
-            // Store Ax, allocate a counter, and acknowledge upstream.
-            ax_d          = ax_i;
-            cnt_alloc_req = 1'b1;
-            ax_ready_o    = 1'b1;
-            // Try to feed first burst through.
-            ax_o          = ax_d;
-            // if we are here we can send the length limit once for sure
-            ax_o.len      = len_limit_i;
-            ax_valid_o    = 1'b1;
-            if (ax_ready_i) begin
-              // Reduce number of bursts still to be sent by one and increment address.
-              num_beats_d = ({1'b0, ax_i.len} + 9'h001) - max_beats;
-              if (ax_d.burst == axi_pkg::BURST_INCR) begin
-                // modify the address
-                ax_d.addr += (1 << ax_d.size) * max_beats;
-              end
-            state_d = Busy;
-            end
-          end
-        end
-      end
-      Busy: begin
-        // Sent next burst from split.
-        ax_o       = ax_q;
-        ax_valid_o = 1'b1;
-        // emit the proper length
-        if (num_beats_q <= max_beats) begin
-          // this is the remainder
-          ax_o.len = axi_pkg::len_t'(num_beats_q - 9'h001);
-        end else begin
-          ax_o.len = len_limit_i;
-        end
-        // next state
-        if (ax_ready_i) begin
-          if (num_beats_q <= max_beats) begin
-            // If this was the last burst, go back to idle.
-            state_d = Idle;
-          end else begin
-            // Otherwise, continue with the next burst.
-            num_beats_d = num_beats_q - max_beats;
-            if (ax_q.burst == axi_pkg::BURST_INCR) begin
-              ax_d.addr += (1 << ax_q.size) * max_beats;
-            end
-          end
-        end
-      end
-      default: /*do nothing*/;
-    endcase
-  end
-
-  // registers
-  `FFARN(ax_q, ax_d, '0, clk_i, rst_ni)
-  `FFARN(state_q, state_d, Idle, clk_i, rst_ni)
-  `FFARN(num_beats_q, num_beats_d, 9'h000, clk_i, rst_ni)
-endmodule
-
-/// Internal module of [`axi_gran_burst_splitter`](module.axi_gran_burst_splitter) to order transactions.
-module axi_gran_burst_splitter_counters #(
-  parameter int unsigned MaxTxns = 0,
-  parameter int unsigned IdWidth = 0,
-  parameter type         id_t    = logic [IdWidth-1:0],
-  parameter type         cnt_t   = logic [axi_pkg::LenWidth:0]
-) (
-  input  logic          clk_i,
-  input  logic          rst_ni,
-
-  input  id_t           alloc_id_i,
-  input  axi_pkg::len_t alloc_len_i,
-  input  logic          alloc_req_i,
-  output logic          alloc_gnt_o,
-
-  input  id_t           cnt_id_i,
-  output axi_pkg::len_t cnt_len_o,
-  input  logic          cnt_set_err_i,
-  output logic          cnt_err_o,
-  input  logic          cnt_dec_i,
-  input  cnt_t          cnt_delta_i,
-  input  logic          cnt_req_i,
-  output logic          cnt_gnt_o
-);
-  localparam int unsigned CntIdxWidth = (MaxTxns > 1) ? $clog2(MaxTxns) : 32'd1;
-  typedef logic [CntIdxWidth-1:0]         cnt_idx_t;
-  logic [MaxTxns-1:0]  cnt_dec, cnt_free, cnt_set, err_d, err_q, cnt_clr;
-  cnt_t                cnt_inp;
-  cnt_t [MaxTxns-1:0]  cnt_oup;
-  cnt_idx_t            cnt_free_idx, cnt_r_idx;
-  for (genvar i = 0; i < MaxTxns; i++) begin : gen_cnt
-    delta_counter #(
-      .WIDTH ( $bits(cnt_t) )
-    ) i_cnt (
-      .clk_i,
-      .rst_ni,
-      .clear_i    ( cnt_clr[i]   ),
-      .en_i       ( cnt_dec[i]   ),
-      .load_i     ( cnt_set[i]   ),
-      .down_i     ( 1'b1         ),
-      .delta_i    ( cnt_delta_i  ),
-      .d_i        ( cnt_inp      ),
-      .q_o        ( cnt_oup[i]   ),
-      .overflow_o ( cnt_clr[i]   )
-    );
-    assign cnt_free[i] = (cnt_oup[i] < cnt_delta_i);
-  end
-  assign cnt_inp = {1'b0, alloc_len_i} + 1;
-
-  lzc #(
-    .WIDTH  ( MaxTxns ),
-    .MODE   ( 1'b0    )  // start counting at index 0
-  ) i_lzc (
-    .in_i    ( cnt_free     ),
-    .cnt_o   ( cnt_free_idx ),
-    .empty_o (              )
-  );
-
-  logic idq_inp_req, idq_inp_gnt,
-        idq_oup_gnt, idq_oup_valid, idq_oup_pop;
-  id_queue #(
-    .ID_WIDTH ( $bits(id_t) ),
-    .CAPACITY ( MaxTxns     ),
-    .data_t   ( cnt_idx_t   )
-  ) i_idq (
-    .clk_i,
-    .rst_ni,
-    .inp_id_i         ( alloc_id_i    ),
-    .inp_data_i       ( cnt_free_idx  ),
-    .inp_req_i        ( idq_inp_req   ),
-    .inp_gnt_o        ( idq_inp_gnt   ),
-    .exists_data_i    ( '0            ),
-    .exists_mask_i    ( '0            ),
-    .exists_req_i     ( 1'b0          ),
-    .exists_o         (/* keep open */),
-    .exists_gnt_o     (/* keep open */),
-    .oup_id_i         ( cnt_id_i      ),
-    .oup_pop_i        ( idq_oup_pop   ),
-    .oup_req_i        ( cnt_req_i     ),
-    .oup_data_o       ( cnt_r_idx     ),
-    .oup_data_valid_o ( idq_oup_valid ),
-    .oup_gnt_o        ( idq_oup_gnt   )
-  );
-  assign idq_inp_req = alloc_req_i & alloc_gnt_o;
-  assign alloc_gnt_o = idq_inp_gnt & |(cnt_free);
-  assign cnt_gnt_o   = idq_oup_gnt & idq_oup_valid;
-  logic [8:0] read_len;
-  assign read_len    = cnt_oup[cnt_r_idx] - 1;
-  assign cnt_len_o   = read_len[7:0];
-
-  assign idq_oup_pop = cnt_req_i & cnt_gnt_o & cnt_dec_i & (cnt_len_o < cnt_delta_i);
-  always_comb begin
-    cnt_dec            = '0;
-    cnt_dec[cnt_r_idx] = cnt_req_i & cnt_gnt_o & cnt_dec_i;
-  end
-  always_comb begin
-    cnt_set               = '0;
-    cnt_set[cnt_free_idx] = alloc_req_i & alloc_gnt_o;
-  end
-  always_comb begin
-    err_d     = err_q;
-    cnt_err_o = err_q[cnt_r_idx];
-    if (cnt_req_i && cnt_gnt_o && cnt_set_err_i) begin
-      err_d[cnt_r_idx] = 1'b1;
-      cnt_err_o        = 1'b1;
-    end
-    if (alloc_req_i && alloc_gnt_o) begin
-      err_d[cnt_free_idx] = 1'b0;
-    end
-  end
-
-  // registers
-  `FFARN(err_q, err_d, '0, clk_i, rst_ni)
-
-  `ifndef VERILATOR
-  // pragma translate_off
-  assume property (@(posedge clk_i) idq_oup_gnt |-> idq_oup_valid)
-    else $warning("Invalid output at ID queue, read not granted!");
   // pragma translate_on
   `endif
 
