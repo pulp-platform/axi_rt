@@ -305,6 +305,8 @@ module tb_axi_rt_unit #(
       .aw_chan_t      ( axi_aw_chan_t    ),
       .ar_chan_t      ( axi_ar_chan_t    ),
       .w_chan_t       ( axi_w_chan_t     ),
+      .r_chan_t       ( axi_r_chan_t     ),
+      .b_chan_t       ( axi_b_chan_t     ),
       .axi_req_t      ( axi_req_t        ),
       .axi_resp_t     ( axi_resp_t       )
     ) i_axi_rt_unit (

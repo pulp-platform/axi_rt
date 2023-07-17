@@ -45,6 +45,29 @@ module axi_gran_burst_splitter_ax_chan #(
   input  logic          cnt_req_i,
   output logic          cnt_gnt_o
 );
+
+  chan_t      ax_i_cut;
+  logic       ax_valid;
+  logic       ax_ready;
+
+  // spill_register #(
+  //   .T      ( chan_t  ),
+  //   .Bypass ( 1'b0        )
+  // ) i_spill_register_ax_in (
+  //   .clk_i,
+  //   .rst_ni,
+  //   .valid_i ( ax_valid_i   ),
+  //   .ready_o ( ax_ready_o   ),
+  //   .data_i  ( ax_i  ),
+  //   .valid_o ( ax_valid     ),
+  //   .ready_i ( ax_ready     ),
+  //   .data_o  ( ax_i_cut )
+  // );
+
+  assign ax_valid   = ax_valid_i;
+  assign ax_ready_o = ax_ready;
+  assign ax_i_cut   = ax_i;
+
   typedef logic[IdWidth-1:0]           cnt_id_t;
   typedef logic[axi_pkg::LenWidth:0] num_beats_t;
 
@@ -62,8 +85,8 @@ module axi_gran_burst_splitter_ax_chan #(
   ) i_axi_gran_burst_splitter_counters (
     .clk_i,
     .rst_ni,
-    .alloc_id_i     ( ax_i.id       ),
-    .alloc_len_i    ( ax_i.len      ),
+    .alloc_id_i     ( ax_i_cut.id       ),
+    .alloc_len_i    ( ax_i_cut.len      ),
     .alloc_req_i    ( cnt_alloc_req ),
     .alloc_gnt_o    ( cnt_alloc_gnt ),
     .cnt_id_i       ( cnt_id_i      ),
@@ -88,30 +111,30 @@ module axi_gran_burst_splitter_ax_chan #(
     num_beats_d   = num_beats_q;
     ax_o          = '0;
     ax_valid_o    = 1'b0;
-    ax_ready_o    = 1'b0;
+    ax_ready    = 1'b0;
     unique case (state_q)
       Idle: begin
-        if (ax_valid_i && cnt_alloc_gnt) begin
+        if (ax_valid && cnt_alloc_gnt) begin
 
           // No splitting required -> feed through.
-          if (ax_i.len <= len_limit_i) begin
-            ax_o          = ax_i;
+          if (ax_i_cut.len <= len_limit_i) begin
+            ax_o          = ax_i_cut;
             ax_valid_o    = 1'b1;
             // As soon as downstream is ready, allocate a counter and acknowledge upstream.
             if (ax_ready_i) begin
               cnt_alloc_req = 1'b1;
-              ax_ready_o    = 1'b1;
+              ax_ready    = 1'b1;
             end
 
           // Splitting required.
           end else begin
             // Store Ax, allocate a counter, and acknowledge upstream.
-            ax_d          = ax_i;
+            ax_d          = ax_i_cut;
             cnt_alloc_req = 1'b1;
-            ax_ready_o    = 1'b1;
+            ax_ready    = 1'b1;
             // As burst is too long, we will need to send multiple
             state_d = Busy;
-            num_beats_d = ({1'b0, ax_i.len} + 9'h001);
+            num_beats_d = ({1'b0, ax_i_cut.len} + 9'h001);
             // Try to feed first burst through.
             ax_o          = ax_d;
             // if we are here we can send the length limit once for sure
@@ -119,7 +142,7 @@ module axi_gran_burst_splitter_ax_chan #(
             ax_valid_o    = 1'b1;
             if (ax_ready_i) begin
               // Reduce number of bursts still to be sent by one and increment address.
-              num_beats_d = ({1'b0, ax_i.len} + 9'h001) - max_beats;
+              num_beats_d = ({1'b0, ax_i_cut.len} + 9'h001) - max_beats;
               if (ax_d.burst == axi_pkg::BURST_INCR) begin
                 // modify the address
                 ax_d.addr += (1 << ax_d.size) * max_beats;
