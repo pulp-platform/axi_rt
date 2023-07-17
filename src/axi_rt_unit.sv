@@ -26,11 +26,14 @@ module axi_rt_unit #(
   parameter int unsigned NumRules       = 32'd0,
   parameter int unsigned PeriodWidth    = 32'd0,
   parameter int unsigned BudgetWidth    = 32'd0,
+  parameter bit          CutDecErrors   =  1'b1,
   parameter type         rt_rule_t      = logic,
   parameter type         addr_t         = logic,
   parameter type         aw_chan_t      = logic,
   parameter type         w_chan_t       = logic,
+  parameter type         b_chan_t       = logic,
   parameter type         ar_chan_t      = logic,
+  parameter type         r_chan_t       = logic,
   parameter type         axi_req_t      = logic,
   parameter type         axi_resp_t     = logic,
   // dependent
@@ -231,7 +234,10 @@ module axi_rt_unit #(
     .axi_req_t    ( axi_req_t  ),
     .axi_resp_t   ( axi_resp_t ),
     .axi_aw_chan_t( aw_chan_t  ),
-    .axi_ar_chan_t( ar_chan_t  )
+    .axi_w_chan_t ( w_chan_t   ),
+    .axi_b_chan_t ( b_chan_t   ),
+    .axi_ar_chan_t( ar_chan_t  ),
+    .axi_r_chan_t ( r_chan_t   )
   ) i_axi_gran_burst_splitter (
     .clk_i,
     .rst_ni,
@@ -278,6 +284,8 @@ module axi_rt_unit #(
   // --------------------------------------------------
   // Address Decoding
   // --------------------------------------------------
+  logic w_decode_error, r_decode_error;
+
   addr_decode #(
     .NoIndices ( NumAddrRegions ),
     .NoRules   ( NumRules       ),
@@ -289,7 +297,7 @@ module axi_rt_unit #(
     .addr_map_i       ( rt_rule_i           ),
     .idx_o            ( aw_region           ),
     .dec_valid_o      ( /* NOT CONNECTED */ ),
-    .dec_error_o      ( w_decode_error_o    ),
+    .dec_error_o      ( w_decode_error      ),
     .en_default_idx_i ( '0                  ),
     .default_idx_i    ( '0                  )
   );
@@ -305,10 +313,25 @@ module axi_rt_unit #(
     .addr_map_i       ( rt_rule_i           ),
     .idx_o            ( ar_region           ),
     .dec_valid_o      ( /* NOT CONNECTED */ ),
-    .dec_error_o      ( r_decode_error_o    ),
+    .dec_error_o      ( r_decode_error      ),
     .en_default_idx_i ( '0                  ),
     .default_idx_i    ( '0                  )
   );
+
+  if (CutDecErrors) begin : gen_decode_error_cuts
+    // instantiate a register
+    logic w_decode_error_q, r_decode_error_q;
+    `FFARN(w_decode_error_q, w_decode_error, '0, clk_i, rst_ni)
+    `FFARN(r_decode_error_q, r_decode_error, '0, clk_i, rst_ni)
+    // connect outputs
+    assign w_decode_error_o = w_decode_error_q;
+    assign r_decode_error_o = r_decode_error_q;
+
+  end else begin : no_gen_decode_error_cuts
+    // connect outputs
+    assign w_decode_error_o = w_decode_error;
+    assign r_decode_error_o = r_decode_error;
+  end
 
 
   // --------------------------------------------------

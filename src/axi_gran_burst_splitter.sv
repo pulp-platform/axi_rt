@@ -37,7 +37,10 @@ module axi_gran_burst_splitter #(
   parameter type         axi_req_t     = logic,
   parameter type         axi_resp_t    = logic,
   parameter type         axi_aw_chan_t = logic,
-  parameter type         axi_ar_chan_t = logic
+  parameter type         axi_w_chan_t  = logic,
+  parameter type         axi_b_chan_t  = logic,
+  parameter type         axi_ar_chan_t = logic,
+  parameter type         axi_r_chan_t  = logic
 ) (
   input  logic  clk_i,
   input  logic  rst_ni,
@@ -55,8 +58,29 @@ module axi_gran_burst_splitter #(
 );
 
   // Demultiplex between supported and unsupported transactions.
-  axi_req_t   act_req,  unsupported_req;
-  axi_resp_t  act_resp, unsupported_resp;
+  axi_req_t   slv_req,  act_req,  unsupported_req;
+  axi_resp_t  slv_resp, act_resp, unsupported_resp;
+
+  axi_multicut #(
+  .NoCuts    (1),
+  .aw_chan_t (axi_aw_chan_t),
+  .w_chan_t  (axi_w_chan_t),
+  .b_chan_t  (axi_b_chan_t),
+  .ar_chan_t (axi_ar_chan_t),
+  .r_chan_t  (axi_r_chan_t),
+  .axi_req_t (axi_req_t),
+  .axi_resp_t(axi_resp_t)
+) i_axi_multicut (
+  .clk_i,
+  .rst_ni,
+  .slv_req_i (slv_req_i ),
+  .slv_resp_o(slv_resp_o),
+  .mst_req_o (slv_req ),
+  .mst_resp_i(slv_resp)
+);
+
+
+
   logic sel_aw_unsupported, sel_ar_unsupported;
   localparam int unsigned MaxTxns = (MaxReadTxns > MaxWriteTxns) ? MaxReadTxns : MaxWriteTxns;
   axi_demux_simple #(
@@ -70,10 +94,10 @@ module axi_gran_burst_splitter #(
     .clk_i,
     .rst_ni,
     .test_i           ( 1'b0                          ),
-    .slv_req_i,
+    .slv_req_i        ( slv_req ),
     .slv_aw_select_i  ( sel_aw_unsupported            ),
     .slv_ar_select_i  ( sel_ar_unsupported            ),
-    .slv_resp_o,
+    .slv_resp_o       ( slv_resp ),
     .mst_reqs_o       ( {unsupported_req,  act_req}   ),
     .mst_resps_i      ( {unsupported_resp, act_resp}  )
   );
@@ -94,12 +118,12 @@ module axi_gran_burst_splitter #(
     // All other transactions are supported.
     return 1'b1;
   endfunction
-  assign sel_aw_unsupported = ~txn_supported(slv_req_i.aw.atop, slv_req_i.aw.burst,
-                                              slv_req_i.aw.cache, slv_req_i.aw.len);
-  assign sel_ar_unsupported = ~txn_supported('0, slv_req_i.ar.burst,
-                                              slv_req_i.ar.cache, slv_req_i.ar.len);
+  assign sel_aw_unsupported = ~txn_supported(slv_req.aw.atop, slv_req.aw.burst,
+                                              slv_req.aw.cache, slv_req.aw.len);
+  assign sel_ar_unsupported = ~txn_supported('0, slv_req.ar.burst,
+                                              slv_req.ar.cache, slv_req.ar.len);
   // Respond to unsupported transactions with slave errors.
-  axi_err_slv #(
+  axi_rt_err_slv #(
     .AxiIdWidth ( IdWidth               ),
     .axi_req_t  ( axi_req_t             ),
     .axi_resp_t ( axi_resp_t            ),

@@ -24,6 +24,7 @@ sources:
       # Level 0
       - src/axi_gran_burst_splitter_counters.sv
       - src/axi_rt_unit_counter.sv
+      - src/axi_rt_err_slv.sv
       # Level 1
       - src/axi_gran_burst_splitter_ax_chan.sv
       # Level 2
@@ -31,6 +32,8 @@ sources:
       - src/axi_write_buffer.sv
       # Level 3
       - src/axi_rt_unit.sv
+      # Level 4
+      - src/axi_rt_unit_synth.sv
 
   - target: test
     files:
