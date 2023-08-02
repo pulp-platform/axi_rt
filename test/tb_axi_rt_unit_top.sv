@@ -1,30 +1,25 @@
-// Copyright (c) 2019 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
+// Copyright 2023 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
 //
 // Authors:
 // - Thomas Benz <tbenz@ethz.ch>
 // - Noah Huetter <huettern@ethz.ch>
 
-// vsim -t 1ns -voptargs=+acc tb_axi_rt_unit; log -r /*;
-
-`include "axi/typedef.svh"
 `include "axi/assign.svh"
+`include "axi/typedef.svh"
 `include "axi-rt/assign.svh"
+`include "register_interface/typedef.svh"
 
 /// Testbench for the AXI RT unit
 /// Codename `Mr Poopybutthole`
-module tb_axi_rt_unit #(
+module tb_axi_rt_unit_top #(
   /// Number of masters
-  parameter int unsigned TbNumMasters    = 32'd1,
+  parameter int unsigned TbNumMasters    = 32'd2,
   /// Number of slaves
   parameter int unsigned TbNumSlaves     = 32'd1,
+  /// Number of regions per master
+  parameter int unsigned TbNumRegions    = 32'd2,
   /// Number of outstanding Transactions
   parameter int unsigned TbNumPending    = 32'd4,
   /// Depth of the Buffer
@@ -68,19 +63,20 @@ module tb_axi_rt_unit #(
   typedef logic [TbAxiDataWidth/8-1:0] strb_t;
   typedef logic [TbAxiUserWidth-1  :0] user_t;
 
-  `AXI_TYPEDEF_ALL(axi,     addr_t, id_t,     data_t, strb_t, user_t)
-  `AXI_TYPEDEF_ALL(axi_slv, addr_t, slv_id_t, data_t, strb_t, user_t)
-
-    /// rule type
+  /// rule type
   typedef struct packed {
     logic [7:0] idx;
     addr_t      start_addr;
     addr_t      end_addr;
   } rt_rule_t;
 
-  /// Number of Address Rules
-  localparam int unsigned TbNumAddrRegions = 32'd3;
-  localparam int unsigned TbNumRules       = TbNumSlaves;
+  `AXI_TYPEDEF_ALL(axi,     addr_t, id_t,     data_t, strb_t, user_t)
+  `AXI_TYPEDEF_ALL(axi_slv, addr_t, slv_id_t, data_t, strb_t, user_t)
+
+  `REG_BUS_TYPEDEF_ALL(cfg, addr_t, word_t, logic[3:0])
+
+  cfg_req_t  cfg_req;
+  cfg_rsp_t  cfg_rsp;
 
   typedef axi_test::axi_file_master#(
       .AW                   ( TbAxiAddrWidth ),
@@ -117,6 +113,13 @@ module tb_axi_rt_unit #(
       .MAPPED               ( 1'b0            )
   ) axi_rand_slave_t;
 
+  typedef reg_test::reg_driver #(
+      .AW ( TbAxiAddrWidth ),
+      .DW ( 32             ),
+      .TA ( ApplTime       ),
+      .TT ( TestTime       )
+  ) reg_drv_t;
+
 
   // -------------
   // DUT signals
@@ -127,6 +130,8 @@ module tb_axi_rt_unit #(
 
   logic  [TbNumMasters-1:0] end_of_sim;
   logic                     done;
+  logic                     rt_configured;
+  logic                     reg_error;
   word_t [TbNumMasters-1:0] total_num_reads;
   word_t [TbNumMasters-1:0] total_num_writes;
   word_t [TbNumMasters-1:0] num_reads;
@@ -136,27 +141,6 @@ module tb_axi_rt_unit #(
   logic       [TbNumMasters-1:0] master_aw_readys;
   logic       [TbNumMasters-1:0] master_ar_valids;
   logic       [TbNumMasters-1:0] master_ar_readys;
-
-  // RT config and status signals
-  logic                                        rt_enable = '0;
-  logic                     [TbNumMasters-1:0] rt_bypassed;
-  axi_pkg::len_t                               len_limit = '0;
-  idx_w_t                   [TbNumMasters-1:0] num_w_pending;
-  idx_aw_t                  [TbNumMasters-1:0] num_aw_pending;
-  logic                     [TbNumMasters-1:0] w_decode_error;
-  logic                     [TbNumMasters-1:0] r_decode_error;
-  logic                     [TbNumMasters-1:0] imtu_enable = '0;
-  logic                     [TbNumMasters-1:0] imtu_abort = '0;
-  budget_t [TbNumMasters-1:0][TbNumSlaves-1:0] w_budget = '0;
-  budget_t [TbNumMasters-1:0][TbNumSlaves-1:0] w_budget_left;
-  period_t [TbNumMasters-1:0][TbNumSlaves-1:0] w_period = '0;
-  period_t [TbNumMasters-1:0][TbNumSlaves-1:0] w_period_left;
-  budget_t [TbNumMasters-1:0][TbNumSlaves-1:0] r_budget = '0;
-  budget_t [TbNumMasters-1:0][TbNumSlaves-1:0] r_budget_left;
-  period_t [TbNumMasters-1:0][TbNumSlaves-1:0] r_period = '0;
-  period_t [TbNumMasters-1:0][TbNumSlaves-1:0] r_period_left;
-  logic                     [TbNumMasters-1:0] isolate;
-  logic                     [TbNumMasters-1:0] isolated;
 
   AXI_BUS #(
     .AXI_ADDR_WIDTH ( TbAxiAddrWidth ),
@@ -206,6 +190,20 @@ module tb_axi_rt_unit #(
     `AXI_ASSIGN_FROM_REQ(slave[i],    slave_req[i])
     `AXI_ASSIGN_TO_RESP(slave_rsp[i], slave[i])
   end
+
+  REG_BUS #(
+    .ADDR_WIDTH ( TbAxiAddrWidth ),
+    .DATA_WIDTH ( TbAxiDataWidth )
+  ) reg_bus (clk);
+
+  assign cfg_req.addr  = reg_bus.addr;
+  assign cfg_req.wdata = reg_bus.wdata;
+  assign cfg_req.wstrb = reg_bus.wstrb;
+  assign cfg_req.write = reg_bus.write;
+  assign cfg_req.valid = reg_bus.valid;
+  assign reg_bus.rdata = cfg_rsp.rdata;
+  assign reg_bus.error = cfg_rsp.error;
+  assign reg_bus.ready = cfg_rsp.ready;
 
 
   //-----------------------------------
@@ -276,8 +274,8 @@ module tb_axi_rt_unit #(
     for (int unsigned i = 0; i < xbar_cfg.NoAddrRules; i++) begin
       addr_map_gen[i] = rt_rule_t'{
         idx:        unsigned'(i),
-        start_addr:  i    * 32'h0001_0000,
-        end_addr:   (i+1) * 32'h0001_0000,
+        start_addr:  i    * 32'h0100_0000,
+        end_addr:   (i+1) * 32'h0100_0000,
         default:    '0
       };
     end
@@ -287,85 +285,39 @@ module tb_axi_rt_unit #(
   //-----------------------------------
   // DUT
   //-----------------------------------
-  for (genvar i = 0; i < TbNumMasters; i++) begin : gen_rt_units
-
-    axi_rt_unit #(
-      .AddrWidth      ( TbAxiAddrWidth   ),
-      .DataWidth      ( TbAxiDataWidth   ),
-      .IdWidth        ( TbAxiIdWidth     ),
-      .UserWidth      ( TbAxiUserWidth   ),
-      .NumPending     ( TbNumPending     ),
-      .WBufferDepth   ( TbWBufferDepth   ),
-      .NumAddrRegions ( TbNumSlaves      ),
-      .NumRules       ( TbNumSlaves      ),
-      .BudgetWidth    ( TbBudgetWidth    ),
-      .PeriodWidth    ( TbPeriodWidth    ),
-      .rt_rule_t      ( rt_rule_t        ),
-      .addr_t         ( addr_t           ),
-      .aw_chan_t      ( axi_aw_chan_t    ),
-      .ar_chan_t      ( axi_ar_chan_t    ),
-      .w_chan_t       ( axi_w_chan_t     ),
-      .r_chan_t       ( axi_r_chan_t     ),
-      .b_chan_t       ( axi_b_chan_t     ),
-      .axi_req_t      ( axi_req_t        ),
-      .axi_resp_t     ( axi_resp_t       )
-    ) i_axi_rt_unit (
-      .clk_i            ( clk                ),
-      .rst_ni           ( rst_n              ),
-      .slv_req_i        ( master_req     [i] ),
-      .slv_resp_o       ( master_rsp     [i] ),
-      .mst_req_o        ( rt_req         [i] ),
-      .mst_resp_i       ( rt_rsp         [i] ),
-      .rt_enable_i      ( rt_enable          ),
-      .rt_bypassed_o    ( rt_bypassed    [i] ),
-      .len_limit_i      ( len_limit          ),
-      .num_w_pending_o  ( num_w_pending  [i] ),
-      .num_aw_pending_o ( num_aw_pending [i] ),
-      .rt_rule_i        ( AddrMap            ),
-      .w_decode_error_o ( w_decode_error [i] ),
-      .r_decode_error_o ( r_decode_error [i] ),
-      .imtu_enable_i    ( imtu_enable    [i] ),
-      .imtu_abort_i     ( imtu_abort     [i] ),
-      .r_budget_i       ( w_budget       [i] ),
-      .r_budget_left_o  ( w_budget_left  [i] ),
-      .r_period_i       ( w_period       [i] ),
-      .r_period_left_o  ( w_period_left  [i] ),
-      .w_budget_i       ( r_budget       [i] ),
-      .w_budget_left_o  ( r_budget_left  [i] ),
-      .w_period_i       ( r_period       [i] ),
-      .w_period_left_o  ( r_period_left  [i] ),
-      .isolate_o        ( isolate        [i] ),
-      .isolated_o       ( isolated       [i] )
-    );
-  end
-
-
-  // configuration tasks
-  task rt_unit_enable (
-    input axi_pkg::len_t len_limit_i
+  axi_rt_unit_top #(
+    .NumManagers      ( TbNumMasters     ),
+    .AddrWidth        ( TbAxiAddrWidth   ),
+    .DataWidth        ( TbAxiDataWidth   ),
+    .IdWidth          ( TbAxiIdWidth     ),
+    .UserWidth        ( TbAxiUserWidth   ),
+    .NumPending       ( TbNumPending     ),
+    .WBufferDepth     ( TbWBufferDepth   ),
+    .NumAddrRegions   ( TbNumRegions     ),
+    .BudgetWidth      ( TbBudgetWidth    ),
+    .PeriodWidth      ( TbPeriodWidth    ),
+    .CutDecErrors     ( 1'b1             ),
+    .CutSplitterPaths ( 1'b1             ),
+    .addr_t           ( addr_t           ),
+    .aw_chan_t        ( axi_aw_chan_t    ),
+    .ar_chan_t        ( axi_ar_chan_t    ),
+    .w_chan_t         ( axi_w_chan_t     ),
+    .r_chan_t         ( axi_r_chan_t     ),
+    .b_chan_t         ( axi_b_chan_t     ),
+    .axi_req_t        ( axi_req_t        ),
+    .axi_resp_t       ( axi_resp_t       ),
+    .req_req_t        ( cfg_req_t        ),
+    .req_rsp_t        ( cfg_rsp_t        )
+  ) i_axi_rt_unit (
+    .clk_i            ( clk        ),
+    .rst_ni           ( rst_n      ),
+    .slv_req_i        ( master_req ),
+    .slv_resp_o       ( master_rsp ),
+    .mst_req_o        ( rt_req     ),
+    .mst_resp_i       ( rt_rsp     ),
+    .reg_req_i        ( cfg_req    ),
+    .reg_rsp_o        ( cfg_rsp    )
   );
-    rt_enable   = 1'b1;
-    len_limit   = len_limit_i;
-    imtu_enable = '1;
-    imtu_abort  = '0;
-  endtask
-
-  task rt_unit_configure (
-    input period_t w_period_i,
-    input period_t r_period_i,
-    input period_t w_budget_i,
-    input period_t r_budget_i
-  );
-
-    for (int i = 0; i < TbNumMasters; i++) begin
-      for (int j = 0; j < TbNumSlaves; j++) begin
-        w_budget[i][j] = w_budget_i;
-        w_period[i][j] = w_period_i;
-        r_budget[i][j] = r_budget_i;
-        r_period[i][j] = r_period_i;
-      end
-    end
-  endtask
 
 
   // include an X-bar
@@ -419,20 +371,42 @@ module tb_axi_rt_unit #(
       automatic axi_file_master_t axi_file_master = new(master_dv[i]);
       axi_file_master.reset();
       axi_file_master.load_files($sformatf("test/stimuli/axi_rt_unit_%04h.reads.txt", i), $sformatf("test/stimuli/axi_rt_unit_%04h.writes.txt", i));
+
+      // tb metrics
       total_num_reads [i] = axi_file_master.num_reads;
       total_num_writes[i] = axi_file_master.num_writes;
       num_writes      [i] = 1;
       num_reads       [i] = 1;
       end_of_sim [i] = 1'b0;
-      // configure RT units
+
+      // wait for config
       @(posedge rst_n);
       @(posedge clk);
-      rt_unit_configure(1000, 1000, 128*1024, 128*1024);
-      rt_unit_enable(7);
-      repeat (10) @(posedge clk);
+      @(posedge rt_configured);
+      repeat (5) @(posedge clk);
+
+      // run
       axi_file_master.run();
       end_of_sim [i] = 1'b1;
     end
+  end
+
+  // configure RT units
+  initial begin
+    // register bus
+    automatic reg_drv_t reg_drv = new(reg_bus);
+    rt_configured = 0;
+    reg_drv.reset_master();
+    @(posedge rst_n);
+    @(posedge clk);
+
+    // config sequence
+    //reg_drv.send_write(0, 32'hffff, 4'hf, reg_error);
+
+    repeat (5) @(posedge clk);
+
+    // config is done
+    rt_configured = 1;
   end
 
   for (genvar i = 0; i < TbNumSlaves; i++) begin : gen_slave_drivers

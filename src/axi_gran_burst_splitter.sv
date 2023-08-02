@@ -1,15 +1,10 @@
-// Copyright (c) 2023 ETH Zurich, University of Bologna
-//
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
+// Copyright 2023 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
 //
 // Authors:
+// - Wolfgang Roenninger <wroennin@iis.ee.ethz.ch>
+// - Andreas Kurth <akurth@iis.ee.ethz.ch>
 // - Thomas Benz <tbenz@iis.ee.ethz.ch>
 
 `include "axi/typedef.svh"
@@ -29,6 +24,7 @@ module axi_gran_burst_splitter #(
   parameter int unsigned MaxReadTxns   = 32'd0,
   // Maximum number of AXI write bursts outstanding at the same time
   parameter int unsigned MaxWriteTxns  = 32'd0,
+  parameter bit          CutPath       = 1'b0,
   // AXI Bus Types
   parameter int unsigned AddrWidth     = 32'd0,
   parameter int unsigned DataWidth     = 32'd0,
@@ -62,24 +58,22 @@ module axi_gran_burst_splitter #(
   axi_resp_t  slv_resp, act_resp, unsupported_resp;
 
   axi_multicut #(
-  .NoCuts    (1),
-  .aw_chan_t (axi_aw_chan_t),
-  .w_chan_t  (axi_w_chan_t),
-  .b_chan_t  (axi_b_chan_t),
-  .ar_chan_t (axi_ar_chan_t),
-  .r_chan_t  (axi_r_chan_t),
-  .axi_req_t (axi_req_t),
-  .axi_resp_t(axi_resp_t)
-) i_axi_multicut (
-  .clk_i,
-  .rst_ni,
-  .slv_req_i (slv_req_i ),
-  .slv_resp_o(slv_resp_o),
-  .mst_req_o (slv_req ),
-  .mst_resp_i(slv_resp)
-);
-
-
+    .NoCuts    ( CutPath  ),
+    .aw_chan_t ( axi_aw_chan_t ),
+    .w_chan_t  ( axi_w_chan_t  ),
+    .b_chan_t  ( axi_b_chan_t  ),
+    .ar_chan_t ( axi_ar_chan_t ),
+    .r_chan_t  ( axi_r_chan_t  ),
+    .axi_req_t ( axi_req_t     ),
+    .axi_resp_t( axi_resp_t    )
+  ) i_axi_multicut (
+    .clk_i,
+    .rst_ni,
+    .slv_req_i ,
+    .slv_resp_o,
+    .mst_req_o   ( slv_req  ),
+    .mst_resp_i  ( slv_resp )
+  );
 
   logic sel_aw_unsupported, sel_ar_unsupported;
   localparam int unsigned MaxTxns = (MaxReadTxns > MaxWriteTxns) ? MaxReadTxns : MaxWriteTxns;
@@ -108,8 +102,8 @@ module axi_gran_burst_splitter #(
     if (len == '0) return 1'b1;
     // Wrapping bursts are currently not supported.
     if (burst == axi_pkg::BURST_WRAP) return 1'b0;
-    // ATOPs are not supported.
-    // if (atop != '0) return 1'b0;
+    // ATOP bursts are not supported.
+    if (atop != '0 & len > 0) return 1'b0;
     // The AXI Spec (A3.4.1) only allows splitting non-modifiable transactions ..
     if (!axi_pkg::modifiable(cache)) begin
       // .. if they are INCR bursts and longer than 16 beats.
@@ -146,7 +140,8 @@ module axi_gran_burst_splitter #(
   axi_gran_burst_splitter_ax_chan #(
     .chan_t   ( axi_aw_chan_t ),
     .IdWidth  ( IdWidth       ),
-    .MaxTxns  ( MaxWriteTxns  )
+    .MaxTxns  ( MaxWriteTxns  ),
+    .CutPath  ( CutPath       )
   ) i_axi_gran_burst_splitter_aw_chan (
     .clk_i,
     .rst_ni,
@@ -281,7 +276,8 @@ module axi_gran_burst_splitter #(
   axi_gran_burst_splitter_ax_chan #(
     .chan_t   ( axi_ar_chan_t ),
     .IdWidth  ( IdWidth       ),
-    .MaxTxns  ( MaxReadTxns   )
+    .MaxTxns  ( MaxReadTxns   ),
+    .CutPath  ( CutPath       )
   ) i_axi_gran_burst_splitter_ar_chan (
     .clk_i,
     .rst_ni,

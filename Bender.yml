@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: SHL-0.51
 
 package:
-  name: axi-rt
+  name: axi_rt
   authors:
     - "Thomas Benz <tbenz@iis.ee.ethz.ch>"
 
@@ -11,8 +11,9 @@ export_include_dirs:
   - include
 
 dependencies:
-  common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.27.0         }
-  axi:          { git: "https://github.com/pulp-platform/axi.git",          version: 0.39.0-beta.10 }
+  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.27.0 }
+  axi:                { git: "https://github.com/pulp-platform/axi.git",                version: 0.39.0 }
+  register_interface: { git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.1  }
 
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this
@@ -22,10 +23,12 @@ sources:
   - target: rtl
     files:
       # Level 0
+      - src/regs/axi_rt_reg_pkg.sv
       - src/axi_gran_burst_splitter_counters.sv
       - src/axi_rt_unit_counter.sv
       - src/axi_rt_err_slv.sv
       # Level 1
+      - src/regs/axi_rt_reg_top.sv
       - src/axi_gran_burst_splitter_ax_chan.sv
       # Level 2
       - src/axi_gran_burst_splitter.sv
@@ -33,9 +36,11 @@ sources:
       # Level 3
       - src/axi_rt_unit.sv
       # Level 4
-      - src/axi_rt_unit_synth.sv
+      - src/axi_rt_unit_top.sv
+      # Level 5
+      - src/axi_rt_unit_top_synth.sv
 
   - target: test
     files:
       # Level 0
-      - test/tb_axi_rt_unit.sv
+      - test/tb_axi_rt_unit_top.sv
