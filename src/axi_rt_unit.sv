@@ -1,13 +1,6 @@
-// Copyright (c) 2023 ETH Zurich, University of Bologna
-//
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
+// Copyright 2023 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
 //
 // Authors:
 // - Thomas Benz <tbenz@ethz.ch>
@@ -16,33 +9,34 @@
 
 /// Real-time unit: fragments and throttles transactions
 module axi_rt_unit #(
-  parameter int unsigned AddrWidth      = 32'd0,
-  parameter int unsigned DataWidth      = 32'd0,
-  parameter int unsigned IdWidth        = 32'd0,
-  parameter int unsigned UserWidth      = 32'd0,
-  parameter int unsigned NumPending     = 32'd0,
-  parameter int unsigned WBufferDepth   = 32'd0,
-  parameter int unsigned NumAddrRegions = 32'd0,
-  parameter int unsigned NumRules       = 32'd0,
-  parameter int unsigned PeriodWidth    = 32'd0,
-  parameter int unsigned BudgetWidth    = 32'd0,
-  parameter bit          CutDecErrors   =  1'b1,
-  parameter type         rt_rule_t      = logic,
-  parameter type         addr_t         = logic,
-  parameter type         aw_chan_t      = logic,
-  parameter type         w_chan_t       = logic,
-  parameter type         b_chan_t       = logic,
-  parameter type         ar_chan_t      = logic,
-  parameter type         r_chan_t       = logic,
-  parameter type         axi_req_t      = logic,
-  parameter type         axi_resp_t     = logic,
+  parameter int unsigned AddrWidth        = 32'd0,
+  parameter int unsigned DataWidth        = 32'd0,
+  parameter int unsigned IdWidth          = 32'd0,
+  parameter int unsigned UserWidth        = 32'd0,
+  parameter int unsigned NumPending       = 32'd0,
+  parameter int unsigned WBufferDepth     = 32'd0,
+  parameter int unsigned NumAddrRegions   = 32'd0,
+  parameter int unsigned NumRules         = 32'd0,
+  parameter int unsigned PeriodWidth      = 32'd0,
+  parameter int unsigned BudgetWidth      = 32'd0,
+  parameter bit          CutSplitterPaths =  1'b0,
+  parameter bit          CutDecErrors     =  1'b0,
+  parameter type         rt_rule_t        = logic,
+  parameter type         addr_t           = logic,
+  parameter type         aw_chan_t        = logic,
+  parameter type         w_chan_t         = logic,
+  parameter type         b_chan_t         = logic,
+  parameter type         ar_chan_t        = logic,
+  parameter type         r_chan_t         = logic,
+  parameter type         axi_req_t        = logic,
+  parameter type         axi_resp_t       = logic,
   // dependent
-  parameter int unsigned IdxWWidth      = cf_math_pkg::idx_width(WBufferDepth),
-  parameter int unsigned IdxAwWidth     = cf_math_pkg::idx_width(NumPending),
-  parameter type         idx_w_t        = logic [IdxWWidth-1:0],
-  parameter type         idx_aw_t       = logic [IdxAwWidth-1:0],
-  parameter type         period_t       = logic [PeriodWidth-1:0],
-  parameter type         budget_t       = logic [BudgetWidth-1:0]
+  parameter int unsigned IdxWWidth        = cf_math_pkg::idx_width(WBufferDepth),
+  parameter int unsigned IdxAwWidth       = cf_math_pkg::idx_width(NumPending),
+  parameter type         idx_w_t          = logic [IdxWWidth-1:0],
+  parameter type         idx_aw_t         = logic [IdxAwWidth-1:0],
+  parameter type         period_t         = logic [PeriodWidth-1:0],
+  parameter type         budget_t         = logic [BudgetWidth-1:0]
 )(
   input logic clk_i,
   input logic rst_ni,
@@ -225,19 +219,20 @@ module axi_rt_unit #(
   // Cut Transactions
   // --------------------------------------------------
   axi_gran_burst_splitter #(
-    .MaxReadTxns  ( NumPending ),
-    .MaxWriteTxns ( NumPending ),
-    .AddrWidth    ( AddrWidth  ),
-    .DataWidth    ( DataWidth  ),
-    .IdWidth      ( IdWidth    ),
-    .UserWidth    ( UserWidth  ),
-    .axi_req_t    ( axi_req_t  ),
-    .axi_resp_t   ( axi_resp_t ),
-    .axi_aw_chan_t( aw_chan_t  ),
-    .axi_w_chan_t ( w_chan_t   ),
-    .axi_b_chan_t ( b_chan_t   ),
-    .axi_ar_chan_t( ar_chan_t  ),
-    .axi_r_chan_t ( r_chan_t   )
+    .MaxReadTxns  ( NumPending       ),
+    .MaxWriteTxns ( NumPending       ),
+    .AddrWidth    ( AddrWidth        ),
+    .DataWidth    ( DataWidth        ),
+    .IdWidth      ( IdWidth          ),
+    .UserWidth    ( UserWidth        ),
+    .CutPath      ( CutSplitterPaths ),
+    .axi_req_t    ( axi_req_t        ),
+    .axi_resp_t   ( axi_resp_t       ),
+    .axi_aw_chan_t( aw_chan_t        ),
+    .axi_w_chan_t ( w_chan_t         ),
+    .axi_b_chan_t ( b_chan_t         ),
+    .axi_ar_chan_t( ar_chan_t        ),
+    .axi_r_chan_t ( r_chan_t         )
   ) i_axi_gran_burst_splitter (
     .clk_i,
     .rst_ni,

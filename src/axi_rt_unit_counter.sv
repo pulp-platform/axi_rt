@@ -1,13 +1,6 @@
-// Copyright (c) 2023 ETH Zurich, University of Bologna
-//
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
+// Copyright 2023 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
 //
 // Authors:
 // - Thomas Benz <tbenz@ethz.ch>
@@ -39,7 +32,7 @@ module ax_rt_unit_counter #(
   logic period_over;
   logic period_load;
 
-  period_t static_delat_one = 'd1;
+  localparam period_t static_delta_one = 'd1;
 
   delta_counter #(
     .WIDTH           ( PeriodWidth ),
@@ -51,7 +44,7 @@ module ax_rt_unit_counter #(
     .en_i      ( enable_i            ),
     .load_i    ( period_load         ),
     .down_i    ( 1'b1                ),
-    .delta_i   ( static_delat_one    ),
+    .delta_i   ( static_delta_one    ),
     .d_i       ( period_i            ),
     .q_o       ( period_left_o       ),
     .overflow_o( /* NOT CONNECTED */ )

@@ -6,6 +6,7 @@ modelsim.ini
 .nfs*
 *.vstf
 wlf*
+*.yml
 
 # scripts
 scripts/compile.tcl
