@@ -9,7 +9,7 @@ the specific AXI4 implementation used. However, it is primarily intended to be u
 [AXI4+ATOP implementation](https://github.com/pulp-platform/axi).
 
 ## License
-iDMA is released under Solderpad v0.51 (SHL-0.51) see [`LICENSE`](LICENSE):
+AXI-RT is released under Solderpad v0.51 (SHL-0.51) see [`LICENSE`](LICENSE):
 
 ## Contributing
 We are happy to accept pull requests and issues from any contributors. See [`CONTRIBUTING.md`](CONTRIBUTING.md)

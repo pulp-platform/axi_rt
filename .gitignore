@@ -9,4 +9,4 @@ wlf*
 *.yml
 
 # scripts
-scripts/compile.tcl
+scripts/compile.vsim.tcl
