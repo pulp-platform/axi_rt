@@ -27,6 +27,7 @@ sources:
       - src/axi_gran_burst_splitter_counters.sv
       - src/axi_rt_unit_counter.sv
       - src/axi_rt_err_slv.sv
+      - src/axi_rt_regbus_guard.sv
       # Level 1
       - src/regs/axi_rt_reg_top.sv
       - src/axi_gran_burst_splitter_ax_chan.sv
