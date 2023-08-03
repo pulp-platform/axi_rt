@@ -5,12 +5,8 @@
 # Authors:
 # - Thomas Benz <tbenz@iis.ee.ethz.ch>
 
-# Default config
-AXIRT_NUM_MGRS = 2
-AXIRT_NUM_SUBS = 2
-
-BENDER    = bender
-AXIRTROOT = .
+BENDER    ?= bender
+AXIRTROOT ?= .
 
 include axirt.mk
 

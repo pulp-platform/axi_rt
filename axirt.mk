@@ -31,7 +31,7 @@ $(AXIRTROOT)/src/regs/axi_rt.hjson: $(AXIRTROOT)/src/regs/gen_hjson.py $(AXIRTRO
 
 axirt_regs: $(AXIRTROOT)/src/regs/axi_rt.hjson $(REGTOOL)
 	$(REGTOOL) -r -t $(AXIRTROOT)/src/regs $<
-	$(REGTOOL) -D -o $(AXIRTROOT)/sw/include/axi_rt_regs.h $<
+	$(REGTOOL) -D -o $(AXIRTROOT)/sw/include/regs/axi_rt.h $<
 
 
 # Simulation compile script

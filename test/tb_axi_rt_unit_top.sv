@@ -132,6 +132,8 @@ module tb_axi_rt_unit_top #(
   logic                     done;
   logic                     rt_configured;
   logic                     reg_error;
+  word_t                    reg_data;
+  slv_id_t                  reg_id;
   word_t [TbNumMasters-1:0] total_num_reads;
   word_t [TbNumMasters-1:0] total_num_writes;
   word_t [TbNumMasters-1:0] num_reads;
@@ -296,9 +298,9 @@ module tb_axi_rt_unit_top #(
     .NumAddrRegions   ( TbNumRegions     ),
     .BudgetWidth      ( TbBudgetWidth    ),
     .PeriodWidth      ( TbPeriodWidth    ),
+    .RegIdWidth       ( TbAxiSlvIdWidth  ),
     .CutDecErrors     ( 1'b1             ),
     .CutSplitterPaths ( 1'b1             ),
-    .addr_t           ( addr_t           ),
     .aw_chan_t        ( axi_aw_chan_t    ),
     .ar_chan_t        ( axi_ar_chan_t    ),
     .w_chan_t         ( axi_w_chan_t     ),
@@ -316,7 +318,8 @@ module tb_axi_rt_unit_top #(
     .mst_req_o        ( rt_req     ),
     .mst_resp_i       ( rt_rsp     ),
     .reg_req_i        ( cfg_req    ),
-    .reg_rsp_o        ( cfg_rsp    )
+    .reg_rsp_o        ( cfg_rsp    ),
+    .reg_id_i         ( reg_id     )
   );
 
 
@@ -396,20 +399,41 @@ module tb_axi_rt_unit_top #(
     // register bus
     automatic reg_drv_t reg_drv = new(reg_bus);
     rt_configured = 0;
+    reg_id        = 1; // we are id 1
     reg_drv.reset_master();
     @(posedge rst_n);
     @(posedge clk);
 
     // config sequence
-    //reg_drv.send_write(0, 32'hffff, 4'hf, reg_error);
+    // these should error
+
+    reg_drv.send_read (32'h0000_0000, reg_data,            reg_error);
+    reg_drv.send_write(32'h0000_0000, 32'hffff_ffff, 4'hf, reg_error);
+
+    // claim ID -> access guard register
+    reg_drv.send_write(32'h0000_07ff, 32'h0000_0007, 4'h1, reg_error);
+    // read ID register
+    reg_drv.send_read (32'h0000_07ff, reg_data,            reg_error);
+
+    // access registers with wrong ID
+    reg_id = 0;
+    reg_drv.send_read (32'h0000_07ff, reg_data,            reg_error);
+    reg_drv.send_write(32'h0000_07ff, 32'h0000_0007, 4'h1, reg_error);
+    reg_drv.send_read (32'h0000_0000, reg_data,            reg_error);
+    reg_drv.send_write(32'h0000_0000, 32'h0000_0007, 4'h1, reg_error);
+    reg_id = 1;
+    reg_drv.send_read (32'h0000_0000, reg_data,            reg_error);
+
+    // we can configure now
 
     repeat (5) @(posedge clk);
 
     // config is done
     rt_configured = 1;
+    $stop();
   end
 
-  for (genvar i = 0; i < TbNumSlaves; i++) begin : gen_slave_drivers
+  /*for (genvar i = 0; i < TbNumSlaves; i++) begin : gen_slave_drivers
     initial begin : proc_axi_slave
       automatic axi_rand_slave_t axi_rand_slave = new(slave_dv[i]);
       axi_rand_slave.reset();
@@ -471,6 +495,6 @@ module tb_axi_rt_unit_top #(
   // else $fatal(1, "AR is unstable.");
   // r_unstable :
   // assert property (@(posedge clk) (master.r_valid && !master.r_ready) |=> $stable(master.r_data))
-  // else $fatal(1, "R is unstable.");
+  // else $fatal(1, "R is unstable.");*/
 
 endmodule
