@@ -24,7 +24,7 @@ AXIRTROOT  ?= $(shell $(BENDER) path axi_rt)
 
 # Reconfigure Registers
 $(AXIRTROOT)/src/regs/axi_rt.hjson: $(AXIRTROOT)/src/regs/gen_hjson.py $(AXIRTROOT)/VERSION
-	$(PYTHON3) $? $(AXIRT_NUM_MGRS) $(AXIRT_NUM_SUBS) > $@
+	$(PYTHON3) $(AXIRTROOT)/src/regs/gen_hjson.py $(AXIRTROOT)/VERSION $(AXIRT_NUM_MGRS) $(AXIRT_NUM_SUBS) > $@
 
 
 .PHONY: axirt_regs
