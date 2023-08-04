@@ -22,7 +22,7 @@
     { name: "NumMrg",
       desc: "Maximum number of managers.",
       type: "int",
-      default: "2"
+      default: "8"
     },
     { name: "NumSub",
       desc: "Configured number of subordinate regions.",
@@ -32,7 +32,7 @@
     { name: "NumReg",
       desc: "Configured number of required registers.",
       type: "int",
-      default: "4"
+      default: "16"
     }
   ],
 
@@ -455,7 +455,7 @@
     { name:     "max_num_managers"
       desc:     "Value of the max_num_managers parameter."
       swaccess: "ro"
-      resval:   "2"
+      resval:   "8"
       fields: [
         { bits: "31:0", name: "max_num_managers", desc: "Value of the max_num_managers parameter." }
       ]
