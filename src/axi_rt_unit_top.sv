@@ -19,9 +19,9 @@ module axi_rt_unit_top #(
   parameter int unsigned NumAddrRegions   = 32'd0,
   parameter int unsigned PeriodWidth      = 32'd0,
   parameter int unsigned BudgetWidth      = 32'd0,
+  parameter int unsigned RegIdWidth       = 32'd0,
   parameter bit          CutSplitterPaths =  1'b0,
   parameter bit          CutDecErrors     =  1'b0,
-  parameter type         addr_t           = logic,
   parameter type         aw_chan_t        = logic,
   parameter type         w_chan_t         = logic,
   parameter type         b_chan_t         = logic,
@@ -30,7 +30,10 @@ module axi_rt_unit_top #(
   parameter type         axi_req_t        = logic,
   parameter type         axi_resp_t       = logic,
   parameter type         req_req_t        = logic,
-  parameter type         req_rsp_t        = logic
+  parameter type         req_rsp_t        = logic,
+  // dependent parameters
+  parameter type         addr_t           = logic [AddrWidth-1:0],
+  parameter type         reg_id_t         = logic [RegIdWidth-1:0]
 )(
   input logic clk_i,
   input logic rst_ni,
@@ -45,7 +48,8 @@ module axi_rt_unit_top #(
 
   // Register interface
   input  req_req_t reg_req_i,
-  output req_rsp_t reg_rsp_o
+  output req_rsp_t reg_rsp_o,
+  input  reg_id_t  reg_id_i
 );
 
   // helper types
@@ -58,6 +62,10 @@ module axi_rt_unit_top #(
   axi_rt_reg_pkg::axi_rt_reg2hw_t reg2hw;
   axi_rt_reg_pkg::axi_rt_hw2reg_t hw2reg;
 
+  // guarded bus
+  req_req_t guard_reg_req;
+  req_rsp_t guard_reg_rsp;
+
   /// rule type
   typedef struct packed {
     logic [7:0] idx;
@@ -69,17 +77,33 @@ module axi_rt_unit_top #(
   //-----------------------------------
   // Register
   //-----------------------------------
+  axi_rt_regbus_guard #(
+    .SubAddrWidth ( axi_rt_reg_pkg::BlockAw + 32'd1 ),
+    .RegIdWidth   ( RegIdWidth                      ),
+    .DataWidth    ( 32'd32                          ),
+    .reg_req_t    ( req_req_t                       ),
+    .reg_rsp_t    ( req_rsp_t                       )
+  ) i_axi_rt_regbus_guard (
+    .clk_i,
+    .rst_ni,
+    .id_i    ( reg_id_i      ),
+    .req_i   ( reg_req_i     ),
+    .rsp_o   ( reg_rsp_o     ),
+    .req_o   ( guard_reg_req ),
+    .rsp_i   ( guard_reg_rsp )
+  );
+
   axi_rt_reg_top #(
     .reg_req_t ( req_req_t ),
     .reg_rsp_t ( req_rsp_t )
   ) i_axi_rt_reg_top (
     .clk_i,
     .rst_ni,
-    .reg_req_i,
-    .reg_rsp_o,
-    .reg2hw     ( reg2hw ),
-    .hw2reg     ( hw2reg ),
-    .devmode_i  ( 1'b1   )
+    .reg_req_i  ( guard_reg_req ),
+    .reg_rsp_o  ( guard_reg_rsp ),
+    .reg2hw     ( reg2hw        ),
+    .hw2reg     ( hw2reg        ),
+    .devmode_i  ( 1'b1          )
   );
 
 

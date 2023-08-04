@@ -22,7 +22,6 @@ module axi_rt_unit #(
   parameter bit          CutSplitterPaths =  1'b0,
   parameter bit          CutDecErrors     =  1'b0,
   parameter type         rt_rule_t        = logic,
-  parameter type         addr_t           = logic,
   parameter type         aw_chan_t        = logic,
   parameter type         w_chan_t         = logic,
   parameter type         b_chan_t         = logic,
@@ -33,6 +32,7 @@ module axi_rt_unit #(
   // dependent
   parameter int unsigned IdxWWidth        = cf_math_pkg::idx_width(WBufferDepth),
   parameter int unsigned IdxAwWidth       = cf_math_pkg::idx_width(NumPending),
+  parameter type         addr_t           = logic [AddrWidth-1:0],
   parameter type         idx_w_t          = logic [IdxWWidth-1:0],
   parameter type         idx_aw_t         = logic [IdxAwWidth-1:0],
   parameter type         period_t         = logic [PeriodWidth-1:0],

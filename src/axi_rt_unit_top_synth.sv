@@ -24,6 +24,7 @@ module axi_rt_unit_top_synth #(
   parameter int unsigned AxiDataWidth     = 32'd64,
   parameter int unsigned AxiUserWidth     = 32'd1,
   parameter int unsigned NumAddrRegions   = 32'd2,
+  parameter int unsigned RegIdWidth       = 32'd2,
   parameter bit          CutDecErrors     =  1'b0,
   parameter bit          CutSplitterPaths =  1'b0,
   // derived
@@ -58,7 +59,8 @@ module axi_rt_unit_top_synth #(
   input  logic      cfg_valid_i,
   output reg_data_t cfg_rdata_o,
   output logic      cfg_error_o,
-  output logic      cfg_ready_o
+  output logic      cfg_ready_o,
+  input  id_t       reg_id_i
 );
 
   `AXI_TYPEDEF_ALL(axi, addr_t, id_t, data_t, strb_t, user_t)
@@ -101,7 +103,7 @@ module axi_rt_unit_top_synth #(
     .BudgetWidth    ( BudgetWidth      ),
     .PeriodWidth    ( PeriodWidth      ),
     .CutDecErrors   ( CutDecErrors     ),
-    .addr_t         ( addr_t           ),
+    .RegIdWidth     ( RegIdWidth       ),
     .aw_chan_t      ( axi_aw_chan_t    ),
     .ar_chan_t      ( axi_ar_chan_t    ),
     .w_chan_t       ( axi_w_chan_t     ),
@@ -119,7 +121,8 @@ module axi_rt_unit_top_synth #(
     .mst_req_o        ( m_req         ),
     .mst_resp_i       ( m_rsp         ),
     .reg_req_i        ( cfg_req       ),
-    .reg_rsp_o        ( cfg_rsp       )
+    .reg_rsp_o        ( cfg_rsp       ),
+    .reg_id_i         ( reg_id_i      )
   );
 
 endmodule

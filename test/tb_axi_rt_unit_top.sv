@@ -75,8 +75,8 @@ module tb_axi_rt_unit_top #(
 
   `REG_BUS_TYPEDEF_ALL(cfg, addr_t, word_t, logic[3:0])
 
-  cfg_req_t  cfg_req, reg_req;
-  cfg_rsp_t  cfg_rsp, reg_rsp;
+  cfg_req_t  cfg_req;
+  cfg_rsp_t  cfg_rsp;
 
   typedef axi_test::axi_file_master#(
       .AW                   ( TbAxiAddrWidth ),
@@ -287,22 +287,6 @@ module tb_axi_rt_unit_top #(
   //-----------------------------------
   // DUT
   //-----------------------------------
-  axi_rt_regbus_guard #(
-    .SubAddrWidth ( 32'd11          ),
-    .RegIdWidth   ( TbAxiSlvIdWidth ),
-    .DataWidth    ( TbAxiDataWidth  ),
-    .reg_req_t    ( cfg_req_t       ),
-    .reg_rsp_t    ( cfg_rsp_t       )
-  ) i_axi_rt_regbus_guard (
-    .clk_i   ( clk      ),
-    .rst_ni  ( rst_n    ),
-    .id_i    ( reg_id   ),
-    .req_i   ( cfg_req  ),
-    .rsp_o   ( cfg_rsp  ),
-    .req_o   ( reg_req  ),
-    .rsp_i   ( reg_rsp  )
-  );
-
   axi_rt_unit_top #(
     .NumManagers      ( TbNumMasters     ),
     .AddrWidth        ( TbAxiAddrWidth   ),
@@ -314,9 +298,9 @@ module tb_axi_rt_unit_top #(
     .NumAddrRegions   ( TbNumRegions     ),
     .BudgetWidth      ( TbBudgetWidth    ),
     .PeriodWidth      ( TbPeriodWidth    ),
+    .RegIdWidth       ( TbAxiSlvIdWidth  ),
     .CutDecErrors     ( 1'b1             ),
     .CutSplitterPaths ( 1'b1             ),
-    .addr_t           ( addr_t           ),
     .aw_chan_t        ( axi_aw_chan_t    ),
     .ar_chan_t        ( axi_ar_chan_t    ),
     .w_chan_t         ( axi_w_chan_t     ),
@@ -333,8 +317,9 @@ module tb_axi_rt_unit_top #(
     .slv_resp_o       ( master_rsp ),
     .mst_req_o        ( rt_req     ),
     .mst_resp_i       ( rt_rsp     ),
-    .reg_req_i        ( reg_req    ),
-    .reg_rsp_o        ( reg_rsp    )
+    .reg_req_i        ( cfg_req    ),
+    .reg_rsp_o        ( cfg_rsp    ),
+    .reg_id_i         ( reg_id     )
   );
 
 
