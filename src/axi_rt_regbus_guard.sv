@@ -84,7 +84,7 @@ module axi_rt_regbus_guard #(
     // differentiate between the valid and invalid state
     if (!state_q.valid) begin
       // access to the special register
-      if (req_i.addr[SubAddrWidth-1:0] == '1) begin
+      if (req_i.addr[SubAddrWidth-1:0] == ('1 << 2)) begin
         select = 2'd2;
       // invalid access to a regular ID -> error
       end else begin
@@ -96,7 +96,7 @@ module axi_rt_regbus_guard #(
       // the current ID is the claimed ID
       if (!block_access) begin
         // access to the special register
-        if (req_i.addr[SubAddrWidth-1:0] == '1) begin
+        if (req_i.addr[SubAddrWidth-1:0] == ('1 << 2)) begin
           select = 2'd2;
         end
 
