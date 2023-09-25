@@ -166,41 +166,37 @@ module axi_gran_burst_splitter #(
   // --------------------------------------------------
   // keep a state where we are in the fragmentation of the w
   axi_pkg::len_t w_len_d, w_len_q;
-  logic          w_first_d, w_first_q;
+  logic          w_len_vld_q, w_len_vld_d;
+
 
   // Feed through, except `last`, which needs to be modified
   always_comb begin : proc_w_frag
     mst_req_o.w        = act_req.w;
     w_len_d            = w_len_q;
-    w_first_d          = w_first_q;
+    w_len_vld_d        = w_len_vld_q;
     // the entire detection machine is only required if len_limit > 0
     if (len_limit_i != 8'h00) begin
+      // In the case we are in the granular mode: last is default 0
+      mst_req_o.w.last = 1'b0;
       // only advance the machine if w ready and valid
       if (act_resp.w_ready & act_req.w_valid)  begin
-        // if the w is the last in the ingress burst, it is in the egress, in this case last is set by
-        // the feed through. We only need to modify if the last is not set upstream
-        if (!act_req.w.last) begin
-          // default here is last = 0
-          mst_req_o.w.last = 1'b0;
-          // we are here meaning there are at least two beats remaining in the w.
-          // first we need to understand if we are first, bc we need to init the counter otherwise
-          if (w_len_q == 8'h00) begin
-            if (w_first_q) begin
-              // we set the counter and the first flag
-              w_len_d   = len_limit_i - 8'h01;
-              w_first_d = 1'b0;
-            end else begin
-              // we are last in sub-burst -> last flag
-              w_len_d   = len_limit_i - 8'h01;
-              mst_req_o.w.last = 1'b1;
-            end
-          end else begin
-            // decrement counter
-            w_len_d = w_len_q - 8'h01;
-          end
+        // the counter is not yet valid, set it to valid and initialize
+        if (!w_len_vld_q) begin
+          w_len_vld_d = 1'b1;
+          w_len_d     = len_limit_i - 8'h01;
         end else begin
-          // we received a last -> reset first flag
-          w_first_d = 1'b1;
+          w_len_d = w_len_q - 8'h01;
+          // in the last case, reinitialize the counter
+          if (w_len_q == 8'h00) begin
+            w_len_d          = len_limit_i;
+            mst_req_o.w.last = 1'b1;
+          end
+        end
+        // final overwrite. if a downstream last comes, the counter is invalid and set to 0
+        if (act_req.w.last) begin
+          w_len_vld_d  = 1'b0;
+          w_len_d      = 8'h00;
+          mst_req_o.w.last = 1'b1;
         end
       end
     end else begin
@@ -372,7 +368,7 @@ module axi_gran_burst_splitter #(
   `FFARN(r_last_q, r_last_d, 1'b0, clk_i, rst_ni)
   `FFARN(r_state_q, r_state_d, RFeedthrough, clk_i, rst_ni)
   `FFARN(w_len_q, w_len_d, 8'h00, clk_i, rst_ni)
-  `FFARN(w_first_q, w_first_d, 1'b1, clk_i, rst_ni)
+  `FFARN(w_len_vld_q, w_len_vld_d, 1'b0, clk_i, rst_ni)
 
   // --------------------------------------------------
   // Assumptions and assertions
