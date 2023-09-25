@@ -19,11 +19,6 @@ void __axirt_release() {
     *reg32(&__base_axirtgrd, 0) = 0;
 }
 
-// setter functions
-void __axirt_set_len_limit(uint8_t limit, uint8_t mgr_id) {
-    *reg8(&__base_axirt, AXI_RT_LEN_LIMIT_0_REG_OFFSET + mgr_id) = limit;
-}
-
 void __axirt_set_len_limit_group(uint8_t limit, uint8_t group_id) {
     uint32_t all_limit = limit | limit << 8 | limit << 16 | limit << 24;
     *reg32(&__base_axirt, AXI_RT_LEN_LIMIT_0_REG_OFFSET + group_id * 4) = all_limit;

@@ -89,7 +89,7 @@ module axi_gran_burst_splitter_counters #(
       .q_o        ( cnt_oup[i]   ),
       .overflow_o ( cnt_clr[i]   )
     );
-    assign cnt_free[i] = (cnt_oup[i] < cnt_delta_i);
+    assign cnt_free[i] = (cnt_oup[i] == '0);
   end
   assign cnt_inp = {1'b0, alloc_pld_out.len} + 1;
 
