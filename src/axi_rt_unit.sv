@@ -96,8 +96,8 @@ module axi_rt_unit #(
   typedef logic[NumRegionWidth-1:0] region_idx_t;
 
   // internal buses
-  axi_req_t  iso_req,  cut_req,  fwd_req,  mux_req;
-  axi_resp_t iso_resp, cut_resp, fwd_resp, mux_resp;
+  axi_req_t  iso_req,  cut_req,  fwd_req,  out_req,  mux_req;
+  axi_resp_t iso_resp, cut_resp, fwd_resp, out_resp, mux_resp;
 
   // number of bytes transferred via one ax
   ax_bytes_t aw_bytes;
@@ -135,6 +135,10 @@ module axi_rt_unit #(
   // RT state
   logic rt_bypassed_d, rt_bypassed_q;
 
+  // isolate output
+  logic isolated;
+  logic tail_isolated;
+
 
   // --------------------------------------------------
   // Bypass FSM
@@ -159,7 +163,7 @@ module axi_rt_unit #(
 
       ISOLATE : begin
         byp_isolate = 1'b1;
-        if (isolated_o) begin
+        if (isolated) begin
           rt_state_d = SWITCH;
         end
       end
@@ -171,7 +175,7 @@ module axi_rt_unit #(
       end
 
       DEISOLATE : begin
-        if(!isolated_o) begin
+        if(!isolated) begin
           rt_state_d = IDLE;
         end
       end
@@ -207,7 +211,7 @@ module axi_rt_unit #(
     .mst_req_o  ( iso_req                      ),
     .mst_resp_i ( iso_resp                     ),
     .isolate_i  ( global_isolate | byp_isolate ),
-    .isolated_o ( isolated_o                   )
+    .isolated_o ( isolated                     )
   );
 
   // global isolate
@@ -380,10 +384,38 @@ module axi_rt_unit #(
 
 
   // --------------------------------------------------
+  // Tail Isolation
+  // --------------------------------------------------
+  axi_isolate #(
+    .NumPending           ( NumPending   ),
+    .TerminateTransaction ( 1'b0         ),
+    .AtopSupport          ( 1'b1         ),
+    .AxiAddrWidth         ( AddrWidth    ),
+    .AxiDataWidth         ( DataWidth    ),
+    .AxiIdWidth           ( IdWidth      ),
+    .AxiUserWidth         ( UserWidth    ),
+    .axi_req_t            ( axi_req_t    ),
+    .axi_resp_t           ( axi_resp_t   )
+  ) i_axi_isolate_tail (
+    .clk_i,
+    .rst_ni,
+    .slv_req_i  ( fwd_req        ),
+    .slv_resp_o ( fwd_resp       ),
+    .mst_req_o  ( out_req        ),
+    .mst_resp_i ( out_resp       ),
+    .isolate_i  ( global_isolate ),
+    .isolated_o ( tail_isolated  )
+  );
+
+  // connect outputs
+  assign isolated_o = tail_isolated | isolated;
+
+
+  // --------------------------------------------------
   // Output
   // --------------------------------------------------
-  assign mst_req_o  = rt_bypassed_q ? iso_req    : fwd_req;
-  assign fwd_resp   = rt_bypassed_q ? '0         : mst_resp_i;
+  assign mst_req_o  = rt_bypassed_q ? iso_req    : out_req;
+  assign out_resp   = rt_bypassed_q ? '0         : mst_resp_i;
   assign iso_resp   = rt_bypassed_q ? mst_resp_i : mux_resp;
   assign mux_req    = rt_bypassed_q ? '0         : iso_req;
 
