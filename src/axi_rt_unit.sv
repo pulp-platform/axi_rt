@@ -285,36 +285,38 @@ module axi_rt_unit #(
   // --------------------------------------------------
   logic w_decode_error, r_decode_error;
 
-  addr_decode #(
+  addr_decode_dync #(
     .NoIndices ( NumAddrRegions ),
     .NoRules   ( NumRules       ),
     .addr_t    ( addr_t         ),
     .rule_t    ( rt_rule_t      ),
     .Napot     ( 1'b0           )
-  ) i_addr_decode_aw (
-    .addr_i           ( fwd_req.aw.addr   ),
-    .addr_map_i       ( rt_rule_i           ),
-    .idx_o            ( aw_region           ),
-    .dec_valid_o      ( /* NOT CONNECTED */ ),
-    .dec_error_o      ( w_decode_error      ),
-    .en_default_idx_i ( '0                  ),
-    .default_idx_i    ( '0                  )
+  ) i_addr_decode_dync_aw (
+    .addr_i           ( fwd_req.aw.addr            ),
+    .addr_map_i       ( rt_rule_i                  ),
+    .idx_o            ( aw_region                  ),
+    .dec_valid_o      ( /* NOT CONNECTED */        ),
+    .dec_error_o      ( w_decode_error             ),
+    .en_default_idx_i ( '0                         ),
+    .default_idx_i    ( '0                         ),
+    .config_ongoing_i ( byp_isolate | !rt_enable_i )
   );
 
-  addr_decode #(
+  addr_decode_dync #(
     .NoIndices ( NumAddrRegions ),
     .NoRules   ( NumRules       ),
     .addr_t    ( addr_t         ),
     .rule_t    ( rt_rule_t      ),
     .Napot     ( 1'b0           )
-  ) i_addr_decode_ar (
-    .addr_i           ( fwd_req.ar.addr   ),
-    .addr_map_i       ( rt_rule_i           ),
-    .idx_o            ( ar_region           ),
-    .dec_valid_o      ( /* NOT CONNECTED */ ),
-    .dec_error_o      ( r_decode_error      ),
-    .en_default_idx_i ( '0                  ),
-    .default_idx_i    ( '0                  )
+  ) i_addr_decode_dync_ar (
+    .addr_i           ( fwd_req.ar.addr            ),
+    .addr_map_i       ( rt_rule_i                  ),
+    .idx_o            ( ar_region                  ),
+    .dec_valid_o      ( /* NOT CONNECTED */        ),
+    .dec_error_o      ( r_decode_error             ),
+    .en_default_idx_i ( '0                         ),
+    .default_idx_i    ( '0                         ),
+    .config_ongoing_i ( byp_isolate | !rt_enable_i )
   );
 
   if (CutDecErrors) begin : gen_decode_error_cuts
