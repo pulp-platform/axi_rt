@@ -25,6 +25,7 @@ module axi_gran_burst_splitter #(
   // Maximum number of AXI write bursts outstanding at the same time
   parameter int unsigned MaxWriteTxns  = 32'd0,
   parameter bit          CutPath       = 1'b0,
+  parameter bit          DisableChecks = 1'b0,
   // AXI Bus Types
   parameter int unsigned AddrWidth     = 32'd0,
   parameter int unsigned DataWidth     = 32'd0,
@@ -95,27 +96,43 @@ module axi_gran_burst_splitter #(
     .mst_reqs_o       ( {unsupported_req,  act_req}   ),
     .mst_resps_i      ( {unsupported_resp, act_resp}  )
   );
+
   // Define supported transactions.
   function bit txn_supported(axi_pkg::atop_t atop, axi_pkg::burst_t burst, axi_pkg::cache_t cache,
-      axi_pkg::len_t len);
-    // Single-beat transactions do not need splitting, so all are supported.
-    if (len == '0) return 1'b1;
-    // Wrapping bursts are currently not supported.
-    if (burst == axi_pkg::BURST_WRAP) return 1'b0;
-    // ATOP bursts are not supported.
-    if (atop != '0 & len > 0) return 1'b0;
-    // The AXI Spec (A3.4.1) only allows splitting non-modifiable transactions ..
-    if (!axi_pkg::modifiable(cache)) begin
-      // .. if they are INCR bursts and longer than 16 beats.
-      return (burst == axi_pkg::BURST_INCR) & (len > 16);
+      axi_pkg::len_t len, axi_pkg::len_t len_limit);
+
+    // if the splitter does not touch the transaction: allow it
+    if (len >= len_limit) begin
+      return 1'b1;
+
+    //
+    end else begin
+
+      // Wrapping bursts are currently not supported to be split
+      if (burst == axi_pkg::BURST_WRAP) return 1'b0;
+
+      // ATOP bursts are not supported.
+      if (atop != '0 & len > 0) return 1'b0;
+
+      // The AXI Spec (A3.4.1) only allows splitting non-modifiable transactions ..
+      if (!axi_pkg::modifiable(cache)) begin
+        // .. if they are INCR bursts and longer than 16 beats.
+        return (burst == axi_pkg::BURST_INCR) & (len > 16);
+      end
+
+      // All other transactions are supported for splitting.
+      return 1'b1;
     end
-    // All other transactions are supported.
-    return 1'b1;
   endfunction
-  assign sel_aw_unsupported = ~txn_supported(slv_req.aw.atop, slv_req.aw.burst,
-                                              slv_req.aw.cache, slv_req.aw.len);
-  assign sel_ar_unsupported = ~txn_supported('0, slv_req.ar.burst,
-                                              slv_req.ar.cache, slv_req.ar.len);
+
+
+  assign sel_aw_unsupported = DisableChecks ? 1'b0 : ~txn_supported(slv_req.aw.atop,
+                                              slv_req.aw.burst, slv_req.aw.cache, slv_req.aw.len,
+                                              len_limit_i);
+
+  assign sel_ar_unsupported = DisableChecks ? 1'b0 : ~txn_supported('0, slv_req.ar.burst,
+                                              slv_req.ar.cache, slv_req.ar.len, len_limit_i);
+
   // Respond to unsupported transactions with slave errors.
   axi_rt_err_slv #(
     .AxiIdWidth ( IdWidth               ),
@@ -378,10 +395,11 @@ module axi_gran_burst_splitter #(
   default disable iff (!rst_ni);
   // Inputs
   assume property (@(posedge clk_i) slv_req_i.aw_valid |->
-      txn_supported(slv_req_i.aw.atop, slv_req_i.aw.burst, slv_req_i.aw.cache, slv_req_i.aw.len)
+      txn_supported(slv_req_i.aw.atop, slv_req_i.aw.burst, slv_req_i.aw.cache, slv_req_i.aw.len,
+                    len_limit_i)
     ) else $warning("Unsupported AW transaction received, returning slave error!");
   assume property (@(posedge clk_i) slv_req_i.ar_valid |->
-      txn_supported('0, slv_req_i.ar.burst, slv_req_i.ar.cache, slv_req_i.ar.len)
+      txn_supported('0, slv_req_i.ar.burst, slv_req_i.ar.cache, slv_req_i.ar.len, len_limit_i)
     ) else $warning("Unsupported AR transaction received, returning slave error!");
   // assume property (@(posedge clk_i) slv_req_i.aw_valid |->
   //     slv_req_i.aw.atop == '0 || slv_req_i.aw.atop[5:4] == axi_pkg::ATOP_ATOMICSTORE
