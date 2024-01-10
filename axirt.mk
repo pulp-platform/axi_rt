@@ -19,8 +19,8 @@ REGTOOL    ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentita
 AXIRT_NUM_MGRS ?= 8
 AXIRT_NUM_SUBS ?= 2
 
-AXIRTROOT  ?= $(shell $(BENDER) path axi_rt)
-
+AXIRTROOT    ?= $(shell $(BENDER) path axi_rt)
+AXIRTXILROOT  = $(AXIRTROOT)/target/xilinx
 
 # Reconfigure Registers
 $(AXIRTROOT)/src/regs/axi_rt.hjson: $(AXIRTROOT)/src/regs/gen_hjson.py $(AXIRTROOT)/VERSION
@@ -37,3 +37,6 @@ axirt_regs: $(AXIRTROOT)/src/regs/axi_rt.hjson $(REGTOOL)
 # Simulation compile script
 $(AXIRTROOT)/scripts/compile.vsim.tcl: axirt_regs $(AXIRTROOT)/Bender.yml $(AXIRTROOT)/Bender.lock
 	$(BENDER) script vsim -t rtl -t test > $@
+
+# Emulation
+include $(AXIRTXILROOT)/xilinx.mk
