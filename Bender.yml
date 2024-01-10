@@ -41,6 +41,13 @@ sources:
       # Level 5
       - src/axi_rt_unit_top_synth.sv
 
+  - target: fpga
+    files:
+      # Level 0
+      - target/xilinx/src/axi_rt_unit_top_xilinx.sv
+      # Level 1
+      - target/xilinx/src/axi_rt_unit_top_xilinx_ip.v
+
   - target: test
     files:
       # Level 0
