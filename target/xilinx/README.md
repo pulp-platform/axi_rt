@@ -59,4 +59,6 @@ not provided.
 
 To add AXI RT IP to a block design, source `scripts/add_axirt_ip.tcl` during the
 block design creation flow. This will add the folder `target/xilinx/axirt_ip` in
-the Xilinx IP catalog, and will instantiate AXI RT in the block design.
+the Xilinx IP catalog, and will instantiate AXI RT in the block design. For the
+command to work, set the correct absolute location of the AXI RT packaged IP
+folder using the variable `AXIRTIP_DIR`, used in `scripts/add_axirt_ip.tcl`.

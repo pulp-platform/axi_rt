@@ -36,14 +36,12 @@ $(AXIRTXILROOT)/scripts/compile.axirt.xilinx.tcl:
 	$(BENDER) script vivado -t rtl -t fpga > $@
 
 # Package IP
-$(AXIRTXILROOT)/$(AXIRTXILPROJ).xci: $(AXIRTXILROOT)/$(AXIRTXILPROJ).xpr
-
 $(AXIRTXILROOT)/$(AXIRTXILPROJ).xpr:
 	cd $(AXIRTXILROOT) && $(VIVADO_ENV) $(VIVADO) -mode $(VIVADO_MODE) -source $(AXIRTROOT)/scripts/run.tcl
 
 .PHONY: axirt-xil-all axirt-xil-clean
 
-axirt-xil-all: $(AXIRTXILROOT)/scripts/compile.axirt.xilinx.tcl $(AXIRTXILROOT)/$(AXIRTXILPROJ).xci
+axirt-xil-all: $(AXIRTXILROOT)/scripts/compile.axirt.xilinx.tcl $(AXIRTXILROOT)/$(AXIRTXILPROJ).xpr
 
 axirt-xil-clean:
 	rm -rf $(AXIRTXILROOT)/.Xil

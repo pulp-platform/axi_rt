@@ -19,7 +19,6 @@ REGTOOL    ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentita
 AXIRT_NUM_MGRS ?= 8
 AXIRT_NUM_SUBS ?= 2
 
-AXIRTROOT    ?= $(shell $(BENDER) path axi_rt)
 AXIRTXILROOT  = $(AXIRTROOT)/target/xilinx
 
 # Reconfigure Registers
