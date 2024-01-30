@@ -10,11 +10,10 @@
 # Change XILINX_PART according to the target board
 
 # Create project
-set project $::env(XILINX_PROJECT)
+set ip_root_dir $::env(XILINX_PROJECT)
 set part $::env(XILINX_PART)
-set ip_root_dir $project
 
-create_project $project . -force -part $part
+create_project $ip_root_dir . -force -part $part
 set_property XPM_LIBRARIES XPM_MEMORY [current_project]
 
 # set number of threads to 8 (maximum, unfortunately)
@@ -320,6 +319,8 @@ ipx::check_integrity [ipx::current_core]
 #WARNING: [IP_Flow 19-7070] Found addressable master interface 'm_axi_rt' without an associated address space. An addressable master interface must reference a valid address space within this IP for addressing to succeed. Please repackage this interface to provide the required address space information.
 #WARNING: [IP_Flow 19-7071] Found addressable slave interface 's_axi_rt' without an associated memory map. An addressable slave interface must reference a valid memory map within this IP for addressing to succeed. Please repackage this interface to provide the required memory map information.
 ipx::save_core [ipx::current_core]
-create_ip -verbose -module_name $project -vlnv ethz.ch:user:axi_rt_unit_top_xilinx_ip
+set_property ip_repo_paths $ip_root_dir [current_project]
+update_ip_catalog
+create_ip -verbose -module_name $ip_root_dir -vlnv ethz.ch:user:axi_rt_unit_top_xilinx_ip
 
 exit
