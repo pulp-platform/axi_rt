@@ -46,13 +46,13 @@
   output __ar_user_t       [__width-1:0] m_axi_``__name``_aruser_o,    \
   output logic             [__width-1:0] m_axi_``__name``_rready_o,    \
   input  logic             [__width-1:0] m_axi_``__name``_awready_i,   \
-  input  logic             [__width-1:0] m_axi_``__name``_arready_o,   \
+  input  logic             [__width-1:0] m_axi_``__name``_arready_i,   \
   input  logic             [__width-1:0] m_axi_``__name``_wready_i,    \
   input  logic             [__width-1:0] m_axi_``__name``_bvalid_i,    \
   input  __id_t            [__width-1:0] m_axi_``__name``_bid_i,       \
   input  axi_pkg::resp_t   [__width-1:0] m_axi_``__name``_bresp_i,     \
   input  __b_user_t        [__width-1:0] m_axi_``__name``_buser_i,     \
-  input  logic             [__width-1:0] m_axi_``__name``_rvalid_o,    \
+  input  logic             [__width-1:0] m_axi_``__name``_rvalid_i,    \
   input  __id_t            [__width-1:0] m_axi_``__name``_rid_i,       \
   input  __data_t          [__width-1:0] m_axi_``__name``_rdata_i,     \
   input  axi_pkg::resp_t   [__width-1:0] m_axi_``__name``_rresp_i,     \
@@ -97,12 +97,12 @@
   input  logic             [__width-1:0] s_axi_``__name``_rready_i,    \
   output logic             [__width-1:0] s_axi_``__name``_awready_o,   \
   output logic             [__width-1:0] s_axi_``__name``_arready_o,   \
-  output logic             [__width-1:0] s_axi_``__name``_wready_i,    \
+  output logic             [__width-1:0] s_axi_``__name``_wready_o,    \
   output logic             [__width-1:0] s_axi_``__name``_bvalid_o,    \
   output __id_t            [__width-1:0] s_axi_``__name``_bid_o,       \
   output axi_pkg::resp_t   [__width-1:0] s_axi_``__name``_bresp_o,     \
   output __b_user_t        [__width-1:0] s_axi_``__name``_buser_o,     \
-  output logic             [__width-1:0] s_axi_``__name``_rvalid_i,    \
+  output logic             [__width-1:0] s_axi_``__name``_rvalid_o,    \
   output __id_t            [__width-1:0] s_axi_``__name``_rid_o,       \
   output __data_t          [__width-1:0] s_axi_``__name``_rdata_o,     \
   output axi_pkg::resp_t   [__width-1:0] s_axi_``__name``_rresp_o,     \
