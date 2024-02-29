@@ -154,14 +154,12 @@ module axi_write_buffer #(
     // default
     num_lasts_d = num_lasts_q;
 
-    // if one enters the queue: increment counter
-    if (ingress_w_last) begin
-      num_lasts_d = num_lasts_d + 1;
-    end
-
-    // if one leaves: decrease counter
-    if (egress_w_last & mgmt_ready_aw) begin
-      num_lasts_d = num_lasts_d - 1;
+    // one enters and none leaves: increase counter
+    if (ingress_w_last & !egress_w_last) begin
+      num_lasts_d = num_lasts_q + 1;
+    // one leaves and none enter: decrease counter
+    end else if (egress_w_last & !ingress_w_last) begin
+      num_lasts_d = num_lasts_q - 1;
     end
   end
 
