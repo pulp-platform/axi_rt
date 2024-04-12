@@ -33,4 +33,7 @@ void __axirt_enable(uint32_t enable);
 
 void __axirt_disable();
 
+// check isolation
+uint8_t __axirt_poll_isolate(uint8_t mgr_id);
+
 #endif
