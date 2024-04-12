@@ -62,3 +62,11 @@ void __axirt_disable() {
     *reg32(&__base_axirt, AXI_RT_IMTU_ENABLE_REG_OFFSET) = 0;
     *reg32(&__base_axirt, AXI_RT_RT_ENABLE_REG_OFFSET) = 0;
 }
+
+// check isolation
+uint8_t __axirt_poll_isolate(uint8_t mgr_id) {
+    // TODO: Add some timeout to not wait forever
+    while (*reg32(&__base_axirt, AXI_RT_ISOLATED_REG_OFFSET) >> mgr_id != 1)
+	;
+    return *reg32(&__base_axirt, AXI_RT_ISOLATED_REG_OFFSET) >> mgr_id;
+}
