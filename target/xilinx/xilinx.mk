@@ -33,7 +33,7 @@ $(AXIRTXILROOT)/src/axi_rt_unit_top_xilinx_ip.v:
 
 # Source files
 $(AXIRTXILROOT)/scripts/compile.axirt.xilinx.tcl:
-	$(BENDER) script vivado -t rtl -t fpga > $@
+	$(BENDER) script vivado -t fpga > $@
 
 # Package IP
 $(AXIRTXILROOT)/$(AXIRTXILPROJ).xpr:

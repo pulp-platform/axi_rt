@@ -35,7 +35,7 @@ axirt_regs: $(AXIRTROOT)/src/regs/axi_rt.hjson $(REGTOOL)
 
 # Simulation compile script
 $(AXIRTROOT)/scripts/compile.vsim.tcl: axirt_regs $(AXIRTROOT)/Bender.yml $(AXIRTROOT)/Bender.lock
-	$(BENDER) script vsim -t rtl -t test > $@
+	$(BENDER) script vsim -t test > $@
 
 # Emulation
 include $(AXIRTXILROOT)/xilinx.mk

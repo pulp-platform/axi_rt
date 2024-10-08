@@ -20,26 +20,24 @@ sources:
   # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
   # levels 1 and 0, etc. Files within a level are ordered alphabetically.
 
-  - target: rtl
-    files:
-      # Level 0
-      - src/regs/axi_rt_reg_pkg.sv
-      - src/axi_gran_burst_splitter_counters.sv
-      - src/axi_rt_unit_counter.sv
-      - src/axi_rt_err_slv.sv
-      - src/axi_rt_regbus_guard.sv
-      # Level 1
-      - src/regs/axi_rt_reg_top.sv
-      - src/axi_gran_burst_splitter_ax_chan.sv
-      # Level 2
-      - src/axi_gran_burst_splitter.sv
-      - src/axi_write_buffer.sv
-      # Level 3
-      - src/axi_rt_unit.sv
-      # Level 4
-      - src/axi_rt_unit_top.sv
-      # Level 5
-      - src/axi_rt_unit_top_synth.sv
+  # Level 0
+  - src/regs/axi_rt_reg_pkg.sv
+  - src/axi_gran_burst_splitter_counters.sv
+  - src/axi_rt_unit_counter.sv
+  - src/axi_rt_err_slv.sv
+  - src/axi_rt_regbus_guard.sv
+  # Level 1
+  - src/regs/axi_rt_reg_top.sv
+  - src/axi_gran_burst_splitter_ax_chan.sv
+  # Level 2
+  - src/axi_gran_burst_splitter.sv
+  - src/axi_write_buffer.sv
+  # Level 3
+  - src/axi_rt_unit.sv
+  # Level 4
+  - src/axi_rt_unit_top.sv
+  # Level 5
+  - src/axi_rt_unit_top_synth.sv
 
   - target: fpga
     files:
