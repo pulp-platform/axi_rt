@@ -6,7 +6,7 @@
 # - Alessandro Ottaviano <aottaviano@ethz.ch>
 
 AXIRTXILROOT ?= .
-PYTHON       := python3
+PYTHON       ?= python3
 
 # Vivado options
 VIVADO       ?= vitis-2022.1 vivado
