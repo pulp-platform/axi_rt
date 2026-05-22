@@ -28,9 +28,13 @@ $(AXIRTROOT)/src/regs/axi_rt.hjson: $(AXIRTROOT)/src/regs/gen_hjson.py $(AXIRTRO
 
 .PHONY: axirt_regs
 
-axirt_regs: $(AXIRTROOT)/src/regs/axi_rt.hjson $(REGTOOL)
-	$(REGTOOL) -r -t $(AXIRTROOT)/src/regs $<
+axirt_regs: $(AXIRTROOT)/sw/include/regs/axi_rt.h $(AXIRTROOT)/src/regs/axi_rt_reg_pkg.sv $(AXIRTROOT)/src/regs/axi_rt_reg_top.sv
+
+$(AXIRTROOT)/sw/include/regs/axi_rt.h: $(AXIRTROOT)/src/regs/axi_rt.hjson $(REGTOOL)
 	$(REGTOOL) -D -o $(AXIRTROOT)/sw/include/regs/axi_rt.h $<
+
+$(AXIRTROOT)/src/regs/axi_rt_reg_pkg.sv $(AXIRTROOT)/src/regs/axi_rt_reg_top.sv: $(AXIRTROOT)/src/regs/axi_rt.hjson $(REGTOOL)
+	$(REGTOOL) -r -t $(AXIRTROOT)/src/regs $<
 
 
 # Simulation compile script
