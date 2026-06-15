@@ -9,7 +9,7 @@
 `include "axi/assign.svh"
 `include "axi-rt/assign.svh"
 `include "axi-rt/port.svh"
-`include "register_interface/typedef.svh"
+`include "apb/typedef.svh"
 
 /// Synth Wrapper for the AXI RT unit
 /// Codename `Mr Poopybutthole`
@@ -53,14 +53,15 @@ module axi_rt_unit_top_synth #(
   `AXI_M_PORT_ARRAY(rt, NumManagers, addr_t, data_t, strb_t, id_t, user_t, user_t, user_t, user_t, user_t)
   `AXI_S_PORT_ARRAY(rt, NumManagers, addr_t, data_t, strb_t, id_t, user_t, user_t, user_t, user_t, user_t)
 
-  input  addr_t     cfg_addr_i,
-  input  reg_data_t cfg_wdata_i,
-  input  reg_strb_t cfg_wstrb_i,
-  input  logic      cfg_write_i,
-  input  logic      cfg_valid_i,
-  output reg_data_t cfg_rdata_o,
-  output logic      cfg_error_o,
-  output logic      cfg_ready_o,
+  input  addr_t     cfg_paddr_i,
+  input  reg_data_t cfg_pwdata_i,
+  input  reg_strb_t cfg_pstrb_i,
+  input  logic      cfg_pwrite_i,
+  input  logic      cfg_psel_i,
+  input  logic      cfg_penable_i,
+  output reg_data_t cfg_prdata_o,
+  output logic      cfg_pready_o,
+  output logic      cfg_pslverr_o,
   input  reg_id_t   reg_id_i
 );
 
@@ -73,19 +74,21 @@ module axi_rt_unit_top_synth #(
   `AXI_ASSIGN_SLAVE_TO_FLAT_ARRAY (rt, NumManagers, s_req, s_rsp)
 
 
-  `REG_BUS_TYPEDEF_ALL(cfg, addr_t, reg_data_t, reg_strb_t)
+  `APB_TYPEDEF_ALL(cfg, addr_t, reg_data_t, reg_strb_t)
 
   cfg_req_t  cfg_req;
-  cfg_rsp_t  cfg_rsp;
+  cfg_resp_t cfg_rsp;
 
-  assign cfg_req.addr  = cfg_addr_i;
-  assign cfg_req.wdata = cfg_wdata_i;
-  assign cfg_req.wstrb = cfg_wstrb_i;
-  assign cfg_req.write = cfg_write_i;
-  assign cfg_req.valid = cfg_valid_i;
-  assign cfg_rdata_o   = cfg_rsp.rdata;
-  assign cfg_error_o   = cfg_rsp.error;
-  assign cfg_ready_o   = cfg_rsp.ready;
+  assign cfg_req.paddr   = cfg_paddr_i;
+  assign cfg_req.pprot   = '0;
+  assign cfg_req.psel    = cfg_psel_i;
+  assign cfg_req.penable = cfg_penable_i;
+  assign cfg_req.pwrite  = cfg_pwrite_i;
+  assign cfg_req.pwdata  = cfg_pwdata_i;
+  assign cfg_req.pstrb   = cfg_pstrb_i;
+  assign cfg_prdata_o    = cfg_rsp.prdata;
+  assign cfg_pready_o    = cfg_rsp.pready;
+  assign cfg_pslverr_o   = cfg_rsp.pslverr;
 
 
   //-----------------------------------
@@ -111,8 +114,8 @@ module axi_rt_unit_top_synth #(
     .r_chan_t       ( axi_r_chan_t     ),
     .axi_req_t      ( axi_req_t        ),
     .axi_resp_t     ( axi_resp_t       ),
-    .req_req_t      ( cfg_req_t        ),
-    .req_rsp_t      ( cfg_rsp_t        )
+    .apb_req_t      ( cfg_req_t        ),
+    .apb_resp_t     ( cfg_resp_t       )
   ) i_axi_rt_unit_top (
     .clk_i,
     .rst_ni,
@@ -120,8 +123,8 @@ module axi_rt_unit_top_synth #(
     .slv_resp_o       ( s_rsp         ),
     .mst_req_o        ( m_req         ),
     .mst_resp_i       ( m_rsp         ),
-    .reg_req_i        ( cfg_req       ),
-    .reg_rsp_o        ( cfg_rsp       ),
+    .apb_req_i        ( cfg_req       ),
+    .apb_rsp_o        ( cfg_rsp       ),
     .reg_id_i         ( reg_id_i      )
   );
 

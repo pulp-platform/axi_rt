@@ -1,0 +1,182 @@
+// Copyright 2024 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
+//
+// Authors:
+// - Thomas Benz <tbenz@iis.ee.ethz.ch>
+// - Tim Fischer <fischeti@iis.ee.ethz.ch>
+//
+// SystemRDL description of the AXI-RT configuration registers.
+// Generated SystemVerilog/C is produced with PeakRDL (see `axirt.mk`).
+// `NumMrg`, `NumReg` and the version fields are overridden at elaboration
+// time via PeakRDL `-P` parameters.
+
+`ifndef AXI_RT_RDL
+`define AXI_RT_RDL
+
+addrmap axi_rt_regs #(
+    longint unsigned NumMrg   = 8,  // Maximum number of managers
+    longint unsigned NumReg   = 16, // Number of per-region registers (NumMrg * NumSub)
+    longint unsigned MajorVer = 0,  // Major version (from VERSION)
+    longint unsigned MinorVer = 0,  // Minor version (from VERSION)
+    longint unsigned PatchVer = 0   // Patch version (from VERSION)
+) {
+    name = "axi_rt";
+    desc = "AXI real-time unit configuration registers.";
+    default regwidth = 32;
+    default sw = rw;
+    default hw = r;
+
+    //--------------------------------------------------------------------------
+    // Version / identification (constant, read-only by software)
+    //--------------------------------------------------------------------------
+    reg { desc = "Value of the major_version.";
+        field { sw = r; hw = na; } major_version[31:0] = MajorVer;
+    } major_version;
+
+    reg { desc = "Value of the minor_version.";
+        field { sw = r; hw = na; } minor_version[31:0] = MinorVer;
+    } minor_version;
+
+    reg { desc = "Value of the patch_version.";
+        field { sw = r; hw = na; } patch_version[31:0] = PatchVer;
+    } patch_version;
+
+    //--------------------------------------------------------------------------
+    // Per-manager configuration (software writes, hardware reads)
+    //--------------------------------------------------------------------------
+    reg { desc = "Enable RT feature on master";
+        field { sw = w; hw = r; } enable[0:0] = 0;
+    } rt_enable[NumMrg];
+
+    reg { desc = "Is the RT inactive?";
+        field { sw = r; hw = w; } bypassed[0:0];
+    } rt_bypassed[NumMrg];
+
+    reg { desc = "Fragmentation of the bursts in beats.";
+        field { sw = w; hw = r; } len[7:0] = 0;
+    } len_limit[NumMrg];
+
+    reg { desc = "Enables the IMTU.";
+        field { sw = w; hw = r; } enable[0:0] = 0;
+    } imtu_enable[NumMrg];
+
+    reg { desc = "Resets both the period and the budget.";
+        field { sw = w; hw = r; } abort[0:0] = 0;
+    } imtu_abort[NumMrg];
+
+    //--------------------------------------------------------------------------
+    // Per-region address map and budget/period configuration
+    //--------------------------------------------------------------------------
+    reg { desc = "The lower 32bit of the start address.";
+        field { sw = w; hw = r; } addr[31:0] = 0;
+    } start_addr_sub_low[NumReg];
+
+    reg { desc = "The higher 32bit of the start address.";
+        field { sw = w; hw = r; } addr[31:0] = 0;
+    } start_addr_sub_high[NumReg];
+
+    reg { desc = "The lower 32bit of the end address.";
+        field { sw = w; hw = r; } addr[31:0] = 0;
+    } end_addr_sub_low[NumReg];
+
+    reg { desc = "The higher 32bit of the end address.";
+        field { sw = w; hw = r; } addr[31:0] = 0;
+    } end_addr_sub_high[NumReg];
+
+    reg { desc = "The budget for writes.";
+        field { sw = w; hw = r; } budget[31:0] = 0;
+    } write_budget[NumReg];
+
+    reg { desc = "The budget for reads.";
+        field { sw = w; hw = r; } budget[31:0] = 0;
+    } read_budget[NumReg];
+
+    reg { desc = "The period for writes.";
+        field { sw = w; hw = r; } period[31:0] = 0;
+    } write_period[NumReg];
+
+    reg { desc = "The period for reads.";
+        field { sw = w; hw = r; } period[31:0] = 0;
+    } read_period[NumReg];
+
+    //--------------------------------------------------------------------------
+    // Per-region live status (hardware writes, software reads)
+    //--------------------------------------------------------------------------
+    reg { desc = "The budget left for writes.";
+        field { sw = r; hw = w; } budget[31:0];
+    } write_budget_left[NumReg];
+
+    reg { desc = "The budget left for reads.";
+        field { sw = r; hw = w; } budget[31:0];
+    } read_budget_left[NumReg];
+
+    reg { desc = "The period left for writes.";
+        field { sw = r; hw = w; } period[31:0];
+    } write_period_left[NumReg];
+
+    reg { desc = "The period left for reads.";
+        field { sw = r; hw = w; } period[31:0];
+    } read_period_left[NumReg];
+
+    //--------------------------------------------------------------------------
+    // Per-manager isolation status (hardware writes, software reads)
+    //--------------------------------------------------------------------------
+    reg { desc = "Is the interface requested to be isolated?";
+        field { sw = r; hw = w; } isolate[0:0];
+    } isolate[NumMrg];
+
+    reg { desc = "Is the interface isolated?";
+        field { sw = r; hw = w; } isolated[0:0];
+    } isolated[NumMrg];
+
+    //--------------------------------------------------------------------------
+    // Parameter report registers (hardware writes constants, software reads)
+    //--------------------------------------------------------------------------
+    reg { desc = "Value of the num_managers parameter.";
+        field { sw = r; hw = w; } num_managers[31:0];
+    } num_managers;
+
+    reg { desc = "Value of the addr_width parameter.";
+        field { sw = r; hw = w; } addr_width[31:0];
+    } addr_width;
+
+    reg { desc = "Value of the data_width parameter.";
+        field { sw = r; hw = w; } data_width[31:0];
+    } data_width;
+
+    reg { desc = "Value of the id_width parameter.";
+        field { sw = r; hw = w; } id_width[31:0];
+    } id_width;
+
+    reg { desc = "Value of the user_width parameter.";
+        field { sw = r; hw = w; } user_width[31:0];
+    } user_width;
+
+    reg { desc = "Value of the num_pending parameter.";
+        field { sw = r; hw = w; } num_pending[31:0];
+    } num_pending;
+
+    reg { desc = "Value of the w_buffer_depth parameter.";
+        field { sw = r; hw = w; } w_buffer_depth[31:0];
+    } w_buffer_depth;
+
+    reg { desc = "Value of the num_addr_regions parameter.";
+        field { sw = r; hw = w; } num_addr_regions[31:0];
+    } num_addr_regions;
+
+    reg { desc = "Value of the period_width parameter.";
+        field { sw = r; hw = w; } period_width[31:0];
+    } period_width;
+
+    reg { desc = "Value of the budget_width parameter.";
+        field { sw = r; hw = w; } budget_width[31:0];
+    } budget_width;
+
+    reg { desc = "Value of the max_num_managers parameter.";
+        field { sw = r; hw = na; } max_num_managers[31:0] = NumMrg;
+    } max_num_managers;
+
+};
+
+`endif // AXI_RT_RDL

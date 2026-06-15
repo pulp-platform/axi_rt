@@ -9,6 +9,16 @@
 #include "util.h"
 #include "params.h"
 
+// The register block is now generated with PeakRDL and described by the packed
+// `axi_rt_regs_t` struct. Each former multi-register is a plain array of 32-bit
+// registers (one per manager / region) rather than a bit-packed word.
+#define AXIRT_REGS ((volatile axi_rt_regs_t *)&__base_axirt)
+
+// Counts derived directly from the generated register map.
+#define AXIRT_NUM_MGR (sizeof(AXIRT_REGS->rt_enable) / sizeof(uint32_t))
+#define AXIRT_NUM_REG (sizeof(AXIRT_REGS->read_budget) / sizeof(uint32_t))
+#define AXIRT_NUM_SUB (AXIRT_NUM_REG / AXIRT_NUM_MGR)
+
 // functions accessing guard unit
 void __axirt_claim(bool read_excl, bool write_excl) {
     uint8_t flags = 4 | (read_excl << 1) | write_excl;
@@ -20,53 +30,52 @@ void __axirt_release() {
 }
 
 void __axirt_set_len_limit_group(uint8_t limit, uint8_t group_id) {
-    uint32_t all_limit = limit | limit << 8 | limit << 16 | limit << 24;
-    *reg32(&__base_axirt, AXI_RT_LEN_LIMIT_0_REG_OFFSET + group_id * 4) = all_limit;
+    AXIRT_REGS->len_limit[group_id] = limit;
 }
 
 void __axirt_set_region(uint64_t start_addr, uint64_t end_addr, uint8_t region_id, uint8_t mgr_id) {
+    uint32_t idx = AXIRT_NUM_SUB * mgr_id + region_id;
 
-    *reg32(&__base_axirt, AXI_RT_END_ADDR_SUB_HIGH_0_REG_OFFSET +
-                              AXI_RT_PARAM_NUM_SUB * mgr_id * 4 + region_id * 4) = end_addr >> 32;
-    *reg32(&__base_axirt, AXI_RT_END_ADDR_SUB_LOW_0_REG_OFFSET + AXI_RT_PARAM_NUM_SUB * mgr_id * 4 +
-                              region_id * 4) = end_addr & 0xffffffff;
-
-    *reg32(&__base_axirt, AXI_RT_START_ADDR_SUB_LOW_0_REG_OFFSET +
-                              AXI_RT_PARAM_NUM_SUB * mgr_id * 4 + region_id * 4) =
-        start_addr & 0xffffffff;
-    *reg32(&__base_axirt, AXI_RT_START_ADDR_SUB_HIGH_0_REG_OFFSET +
-                              AXI_RT_PARAM_NUM_SUB * mgr_id * 4 + region_id * 4) = start_addr >> 32;
+    AXIRT_REGS->end_addr_sub_high[idx]   = end_addr >> 32;
+    AXIRT_REGS->end_addr_sub_low[idx]    = end_addr & 0xffffffff;
+    AXIRT_REGS->start_addr_sub_low[idx]  = start_addr & 0xffffffff;
+    AXIRT_REGS->start_addr_sub_high[idx] = start_addr >> 32;
 }
 
 void __axirt_set_period(uint32_t period, uint8_t region_id, uint8_t mgr_id) {
-    *reg32(&__base_axirt, AXI_RT_WRITE_PERIOD_0_REG_OFFSET + AXI_RT_PARAM_NUM_SUB * mgr_id * 4 +
-                              region_id * 4) = period;
-    *reg32(&__base_axirt, AXI_RT_READ_PERIOD_0_REG_OFFSET + AXI_RT_PARAM_NUM_SUB * mgr_id * 4 +
-                              region_id * 4) = period;
+    uint32_t idx = AXIRT_NUM_SUB * mgr_id + region_id;
+
+    AXIRT_REGS->write_period[idx] = period;
+    AXIRT_REGS->read_period[idx]  = period;
 }
 
 void __axirt_set_budget(uint32_t budget, uint8_t region_id, uint8_t mgr_id) {
-    *reg32(&__base_axirt, AXI_RT_WRITE_BUDGET_0_REG_OFFSET + AXI_RT_PARAM_NUM_SUB * mgr_id * 4 +
-                              region_id * 4) = budget;
-    *reg32(&__base_axirt, AXI_RT_READ_BUDGET_0_REG_OFFSET + AXI_RT_PARAM_NUM_SUB * mgr_id * 4 +
-                              region_id * 4) = budget;
+    uint32_t idx = AXIRT_NUM_SUB * mgr_id + region_id;
+
+    AXIRT_REGS->write_budget[idx] = budget;
+    AXIRT_REGS->read_budget[idx]  = budget;
 }
 
 // config functions
 void __axirt_enable(uint32_t enable) {
-    *reg32(&__base_axirt, AXI_RT_RT_ENABLE_REG_OFFSET) = enable;
-    *reg32(&__base_axirt, AXI_RT_IMTU_ENABLE_REG_OFFSET) = enable;
+    for (uint32_t i = 0; i < AXIRT_NUM_MGR; i++) {
+        uint32_t en = (enable >> i) & 0x1;
+        AXIRT_REGS->rt_enable[i]   = en;
+        AXIRT_REGS->imtu_enable[i] = en;
+    }
 }
 
 void __axirt_disable() {
-    *reg32(&__base_axirt, AXI_RT_IMTU_ENABLE_REG_OFFSET) = 0;
-    *reg32(&__base_axirt, AXI_RT_RT_ENABLE_REG_OFFSET) = 0;
+    for (uint32_t i = 0; i < AXIRT_NUM_MGR; i++) {
+        AXIRT_REGS->imtu_enable[i] = 0;
+        AXIRT_REGS->rt_enable[i]   = 0;
+    }
 }
 
 // check isolation
 uint8_t __axirt_poll_isolate(uint8_t mgr_id) {
     // TODO: Add some timeout to not wait forever
-    while (*reg32(&__base_axirt, AXI_RT_ISOLATED_REG_OFFSET) >> mgr_id != 1)
+    while ((AXIRT_REGS->isolated[mgr_id] & 0x1) != 1)
 	;
-    return *reg32(&__base_axirt, AXI_RT_ISOLATED_REG_OFFSET) >> mgr_id;
+    return AXIRT_REGS->isolated[mgr_id] & 0x1;
 }

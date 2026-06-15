@@ -9,7 +9,7 @@
 `include "axi/assign.svh"
 `include "axi/typedef.svh"
 `include "axi-rt/assign.svh"
-`include "register_interface/typedef.svh"
+`include "apb/typedef.svh"
 
 /// Testbench for the AXI RT unit
 /// Codename `Mr Poopybutthole`
@@ -73,10 +73,10 @@ module tb_axi_rt_unit_top #(
   `AXI_TYPEDEF_ALL(axi,     addr_t, id_t,     data_t, strb_t, user_t)
   `AXI_TYPEDEF_ALL(axi_slv, addr_t, slv_id_t, data_t, strb_t, user_t)
 
-  `REG_BUS_TYPEDEF_ALL(cfg, addr_t, word_t, logic[3:0])
+  `APB_TYPEDEF_ALL(cfg, addr_t, word_t, logic[3:0])
 
   cfg_req_t  cfg_req;
-  cfg_rsp_t  cfg_rsp;
+  cfg_resp_t cfg_rsp;
 
   typedef axi_test::axi_file_master#(
       .AW                   ( TbAxiAddrWidth ),
@@ -113,12 +113,12 @@ module tb_axi_rt_unit_top #(
       .MAPPED               ( 1'b0            )
   ) axi_rand_slave_t;
 
-  typedef reg_test::reg_driver #(
-      .AW ( TbAxiAddrWidth ),
-      .DW ( 32             ),
-      .TA ( ApplTime       ),
-      .TT ( TestTime       )
-  ) reg_drv_t;
+  typedef apb_test::apb_driver #(
+      .ADDR_WIDTH ( TbAxiAddrWidth ),
+      .DATA_WIDTH ( 32             ),
+      .TA         ( ApplTime       ),
+      .TT         ( TestTime       )
+  ) apb_drv_t;
 
 
   // -------------
@@ -193,19 +193,21 @@ module tb_axi_rt_unit_top #(
     `AXI_ASSIGN_TO_RESP(slave_rsp[i], slave[i])
   end
 
-  REG_BUS #(
+  APB_DV #(
     .ADDR_WIDTH ( TbAxiAddrWidth ),
-    .DATA_WIDTH ( TbAxiDataWidth )
-  ) reg_bus (clk);
+    .DATA_WIDTH ( 32             )
+  ) apb_dv (clk);
 
-  assign cfg_req.addr  = reg_bus.addr;
-  assign cfg_req.wdata = reg_bus.wdata;
-  assign cfg_req.wstrb = reg_bus.wstrb;
-  assign cfg_req.write = reg_bus.write;
-  assign cfg_req.valid = reg_bus.valid;
-  assign reg_bus.rdata = cfg_rsp.rdata;
-  assign reg_bus.error = cfg_rsp.error;
-  assign reg_bus.ready = cfg_rsp.ready;
+  assign cfg_req.paddr   = apb_dv.paddr;
+  assign cfg_req.pprot   = apb_dv.pprot;
+  assign cfg_req.psel    = apb_dv.psel;
+  assign cfg_req.penable = apb_dv.penable;
+  assign cfg_req.pwrite  = apb_dv.pwrite;
+  assign cfg_req.pwdata  = apb_dv.pwdata;
+  assign cfg_req.pstrb   = apb_dv.pstrb;
+  assign apb_dv.pready   = cfg_rsp.pready;
+  assign apb_dv.prdata   = cfg_rsp.prdata;
+  assign apb_dv.pslverr  = cfg_rsp.pslverr;
 
 
   //-----------------------------------
@@ -308,8 +310,8 @@ module tb_axi_rt_unit_top #(
     .b_chan_t         ( axi_b_chan_t     ),
     .axi_req_t        ( axi_req_t        ),
     .axi_resp_t       ( axi_resp_t       ),
-    .req_req_t        ( cfg_req_t        ),
-    .req_rsp_t        ( cfg_rsp_t        )
+    .apb_req_t        ( cfg_req_t        ),
+    .apb_resp_t       ( cfg_resp_t       )
   ) i_axi_rt_unit (
     .clk_i            ( clk        ),
     .rst_ni           ( rst_n      ),
@@ -317,8 +319,8 @@ module tb_axi_rt_unit_top #(
     .slv_resp_o       ( master_rsp ),
     .mst_req_o        ( rt_req     ),
     .mst_resp_i       ( rt_rsp     ),
-    .reg_req_i        ( cfg_req    ),
-    .reg_rsp_o        ( cfg_rsp    ),
+    .apb_req_i        ( cfg_req    ),
+    .apb_rsp_o        ( cfg_rsp    ),
     .reg_id_i         ( reg_id     )
   );
 
@@ -396,33 +398,36 @@ module tb_axi_rt_unit_top #(
 
   // configure RT units
   initial begin
-    // register bus
-    automatic reg_drv_t reg_drv = new(reg_bus);
+    // APB configuration bus driver
+    automatic apb_drv_t apb_drv = new(apb_dv);
+    // address of the special claim register: top word of the guard space
+    automatic addr_t claim_addr =
+        (addr_t'(1) << (axi_rt_regs_pkg::AXI_RT_REGS_MIN_ADDR_WIDTH + 1)) - 4;
     rt_configured = 0;
     reg_id        = 1; // we are id 1
-    reg_drv.reset_master();
+    apb_drv.reset_master();
     @(posedge rst_n);
     @(posedge clk);
 
     // config sequence
     // these should error
 
-    reg_drv.send_read (32'h0000_0000, reg_data,            reg_error);
-    reg_drv.send_write(32'h0000_0000, 32'hffff_ffff, 4'hf, reg_error);
+    apb_drv.read (32'h0000_0000, reg_data,            reg_error);
+    apb_drv.write(32'h0000_0000, 32'hffff_ffff, 4'hf, reg_error);
 
     // claim ID -> access guard register
-    reg_drv.send_write(32'h0000_07ff, 32'h0000_0007, 4'h1, reg_error);
+    apb_drv.write(claim_addr,    32'h0000_0007, 4'h1, reg_error);
     // read ID register
-    reg_drv.send_read (32'h0000_07ff, reg_data,            reg_error);
+    apb_drv.read (claim_addr,    reg_data,            reg_error);
 
     // access registers with wrong ID
     reg_id = 0;
-    reg_drv.send_read (32'h0000_07ff, reg_data,            reg_error);
-    reg_drv.send_write(32'h0000_07ff, 32'h0000_0007, 4'h1, reg_error);
-    reg_drv.send_read (32'h0000_0000, reg_data,            reg_error);
-    reg_drv.send_write(32'h0000_0000, 32'h0000_0007, 4'h1, reg_error);
+    apb_drv.read (claim_addr,    reg_data,            reg_error);
+    apb_drv.write(claim_addr,    32'h0000_0007, 4'h1, reg_error);
+    apb_drv.read (32'h0000_0000, reg_data,            reg_error);
+    apb_drv.write(32'h0000_0000, 32'h0000_0007, 4'h1, reg_error);
     reg_id = 1;
-    reg_drv.send_read (32'h0000_0000, reg_data,            reg_error);
+    apb_drv.read (32'h0000_0000, reg_data,            reg_error);
 
     // we can configure now
 

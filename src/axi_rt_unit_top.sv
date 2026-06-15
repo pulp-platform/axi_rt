@@ -30,8 +30,8 @@ module axi_rt_unit_top #(
   parameter type         r_chan_t           = logic,
   parameter type         axi_req_t          = logic,
   parameter type         axi_resp_t         = logic,
-  parameter type         req_req_t          = logic,
-  parameter type         req_rsp_t          = logic,
+  parameter type         apb_req_t          = logic,
+  parameter type         apb_resp_t         = logic,
   // dependent parameters
   parameter type         addr_t             = logic [AddrWidth-1:0],
   parameter type         reg_id_t           = logic [RegIdWidth-1:0]
@@ -47,10 +47,10 @@ module axi_rt_unit_top #(
   output axi_req_t  [NumManagers-1:0] mst_req_o,
   input  axi_resp_t [NumManagers-1:0] mst_resp_i,
 
-  // Register interface
-  input  req_req_t reg_req_i,
-  output req_rsp_t reg_rsp_o,
-  input  reg_id_t  reg_id_i
+  // APB configuration interface
+  input  apb_req_t  apb_req_i,
+  output apb_resp_t apb_rsp_o,
+  input  reg_id_t   reg_id_i
 );
 
   // helper types
@@ -59,13 +59,13 @@ module axi_rt_unit_top #(
   localparam type period_array_t = period_t [NumAddrRegions-1:0];
   localparam type budget_array_t = budget_t [NumAddrRegions-1:0];
 
-  // register signals
-  axi_rt_reg_pkg::axi_rt_reg2hw_t reg2hw;
-  axi_rt_reg_pkg::axi_rt_hw2reg_t hw2reg;
+  // register signals (PeakRDL hardware interface)
+  axi_rt_regs_pkg::axi_rt_regs__in_t  hwif_in;
+  axi_rt_regs_pkg::axi_rt_regs__out_t hwif_out;
 
-  // guarded bus
-  req_req_t guard_reg_req;
-  req_rsp_t guard_reg_rsp;
+  // guarded APB bus between the access guard and the register block
+  apb_req_t  guard_apb_req;
+  apb_resp_t guard_apb_rsp;
 
   /// rule type
   typedef struct packed {
@@ -79,32 +79,37 @@ module axi_rt_unit_top #(
   // Register
   //-----------------------------------
   axi_rt_regbus_guard #(
-    .SubAddrWidth ( axi_rt_reg_pkg::BlockAw + 32'd1 ),
-    .RegIdWidth   ( RegIdWidth                      ),
-    .DataWidth    ( 32'd32                          ),
-    .reg_req_t    ( req_req_t                       ),
-    .reg_rsp_t    ( req_rsp_t                       )
+    .SubAddrWidth ( axi_rt_regs_pkg::AXI_RT_REGS_MIN_ADDR_WIDTH + 32'd1 ),
+    .RegIdWidth   ( RegIdWidth                                          ),
+    .DataWidth    ( 32'd32                                              ),
+    .apb_req_t    ( apb_req_t                                           ),
+    .apb_resp_t   ( apb_resp_t                                          )
   ) i_axi_rt_regbus_guard (
     .clk_i,
     .rst_ni,
     .id_i    ( reg_id_i      ),
-    .req_i   ( reg_req_i     ),
-    .rsp_o   ( reg_rsp_o     ),
-    .req_o   ( guard_reg_req ),
-    .rsp_i   ( guard_reg_rsp )
+    .req_i   ( apb_req_i     ),
+    .rsp_o   ( apb_rsp_o     ),
+    .req_o   ( guard_apb_req ),
+    .rsp_i   ( guard_apb_rsp )
   );
 
-  axi_rt_reg_top #(
-    .reg_req_t ( req_req_t ),
-    .reg_rsp_t ( req_rsp_t )
-  ) i_axi_rt_reg_top (
-    .clk_i,
-    .rst_ni,
-    .reg_req_i  ( guard_reg_req ),
-    .reg_rsp_o  ( guard_reg_rsp ),
-    .reg2hw     ( reg2hw        ),
-    .hw2reg     ( hw2reg        ),
-    .devmode_i  ( 1'b1          )
+  axi_rt_regs i_axi_rt_regs (
+    .clk           ( clk_i  ),
+    .arst_n        ( rst_ni ),
+    // APB slave (flat) driven from the guarded request
+    .s_apb_psel    ( guard_apb_req.psel    ),
+    .s_apb_penable ( guard_apb_req.penable ),
+    .s_apb_pwrite  ( guard_apb_req.pwrite  ),
+    .s_apb_pprot   ( guard_apb_req.pprot   ),
+    .s_apb_paddr   ( guard_apb_req.paddr[axi_rt_regs_pkg::AXI_RT_REGS_MIN_ADDR_WIDTH-1:0] ),
+    .s_apb_pwdata  ( guard_apb_req.pwdata  ),
+    .s_apb_pstrb   ( guard_apb_req.pstrb   ),
+    .s_apb_pready  ( guard_apb_rsp.pready  ),
+    .s_apb_prdata  ( guard_apb_rsp.prdata  ),
+    .s_apb_pslverr ( guard_apb_rsp.pslverr ),
+    .hwif_in       ( hwif_in  ),
+    .hwif_out      ( hwif_out )
   );
 
 
@@ -157,16 +162,16 @@ module axi_rt_unit_top #(
       .slv_resp_o       ( slv_resp_o         [i] ),
       .mst_req_o        ( mst_req_o          [i] ),
       .mst_resp_i       ( mst_resp_i         [i] ),
-      .rt_enable_i      ( reg2hw.rt_enable   [i] ),
-      .rt_bypassed_o    ( hw2reg.rt_bypassed [i] ),
-      .len_limit_i      ( reg2hw.len_limit   [i] ),
+      .rt_enable_i      ( hwif_out.rt_enable   [i].enable.value ),
+      .rt_bypassed_o    ( hwif_in.rt_bypassed  [i].bypassed.next ),
+      .len_limit_i      ( hwif_out.len_limit   [i].len.value    ),
       .num_w_pending_o  ( /* NOT CONNECTED */    ),
       .num_aw_pending_o ( /* NOT CONNECTED */    ),
       .rt_rule_i        ( addr_map_i             ),
       .w_decode_error_o (  /* NOT CONNECTED */   ),
       .r_decode_error_o (  /* NOT CONNECTED */   ),
-      .imtu_enable_i    ( reg2hw.imtu_enable [i] ),
-      .imtu_abort_i     ( reg2hw.imtu_abort  [i] ),
+      .imtu_enable_i    ( hwif_out.imtu_enable [i].enable.value ),
+      .imtu_abort_i     ( hwif_out.imtu_abort  [i].abort.value  ),
       .r_budget_i       ( r_budget               ),
       .r_budget_left_o  ( r_budget_left          ),
       .r_period_i       ( r_period               ),
@@ -175,22 +180,23 @@ module axi_rt_unit_top #(
       .w_budget_left_o  ( w_budget_left          ),
       .w_period_i       ( w_period               ),
       .w_period_left_o  ( w_period_left          ),
-      .isolate_o        ( hw2reg.isolate     [i] ),
-      .isolated_o       ( hw2reg.isolated    [i] )
+      .isolate_o        ( hwif_in.isolate      [i].isolate.next  ),
+      .isolated_o       ( hwif_in.isolated     [i].isolated.next )
     );
 
-    // assemble budget/period structs
-    assign r_budget = reg2hw.read_budget  [i * NumAddrRegions +: NumAddrRegions];
-    assign r_period = reg2hw.read_period  [i * NumAddrRegions +: NumAddrRegions];
-    assign w_budget = reg2hw.write_budget [i * NumAddrRegions +: NumAddrRegions];
-    assign w_period = reg2hw.write_period [i * NumAddrRegions +: NumAddrRegions];
+    // assemble budget/period structs and connect live status back to registers
+    for (genvar r = 0; r < NumAddrRegions; r++) begin : gen_region_conn
+      localparam int unsigned RegIdx = i * NumAddrRegions + r;
 
-    // read budget/period left
-    always_comb begin : proc_assemble_hw2reg
-      hw2reg.read_budget_left  [i * NumAddrRegions +: NumAddrRegions] = r_budget_left;
-      hw2reg.read_period_left  [i * NumAddrRegions +: NumAddrRegions] = r_period_left;
-      hw2reg.write_budget_left [i * NumAddrRegions +: NumAddrRegions] = w_budget_left;
-      hw2reg.write_period_left [i * NumAddrRegions +: NumAddrRegions] = w_period_left;
+      assign r_budget[r] = hwif_out.read_budget  [RegIdx].budget.value[BudgetWidth-1:0];
+      assign r_period[r] = hwif_out.read_period  [RegIdx].period.value[PeriodWidth-1:0];
+      assign w_budget[r] = hwif_out.write_budget [RegIdx].budget.value[BudgetWidth-1:0];
+      assign w_period[r] = hwif_out.write_period [RegIdx].period.value[PeriodWidth-1:0];
+
+      assign hwif_in.read_budget_left  [RegIdx].budget.next = r_budget_left[r];
+      assign hwif_in.read_period_left  [RegIdx].period.next = r_period_left[r];
+      assign hwif_in.write_budget_left [RegIdx].budget.next = w_budget_left[r];
+      assign hwif_in.write_period_left [RegIdx].period.next = w_period_left[r];
     end
 
     // connect address map
@@ -198,10 +204,10 @@ module axi_rt_unit_top #(
       for (int unsigned r = 0; r < NumAddrRegions; r++) begin
         addr_map_i[r] = rt_rule_t'{
           idx:        unsigned'(r),
-          start_addr: { reg2hw.start_addr_sub_high[i * NumAddrRegions + r],
-                        reg2hw.start_addr_sub_low [i * NumAddrRegions + r] },
-          end_addr:   { reg2hw.end_addr_sub_high  [i * NumAddrRegions + r],
-                        reg2hw.end_addr_sub_low   [i * NumAddrRegions + r] },
+          start_addr: { hwif_out.start_addr_sub_high[i * NumAddrRegions + r].addr.value,
+                        hwif_out.start_addr_sub_low [i * NumAddrRegions + r].addr.value },
+          end_addr:   { hwif_out.end_addr_sub_high  [i * NumAddrRegions + r].addr.value,
+                        hwif_out.end_addr_sub_low   [i * NumAddrRegions + r].addr.value },
           default:    '0
         };
       end
@@ -211,15 +217,15 @@ module axi_rt_unit_top #(
   end
 
   // assign the parameters to the registers
-  assign hw2reg.num_managers     = NumManagers;
-  assign hw2reg.addr_width       = AddrWidth;
-  assign hw2reg.data_width       = DataWidth;
-  assign hw2reg.id_width         = IdWidth;
-  assign hw2reg.user_width       = UserWidth;
-  assign hw2reg.num_pending      = NumPending;
-  assign hw2reg.w_buffer_depth   = WBufferDepth;
-  assign hw2reg.num_addr_regions = NumAddrRegions;
-  assign hw2reg.period_width     = PeriodWidth;
-  assign hw2reg.budget_width     = BudgetWidth;
+  assign hwif_in.num_managers.num_managers.next         = NumManagers;
+  assign hwif_in.addr_width.addr_width.next             = AddrWidth;
+  assign hwif_in.data_width.data_width.next             = DataWidth;
+  assign hwif_in.id_width.id_width.next                 = IdWidth;
+  assign hwif_in.user_width.user_width.next             = UserWidth;
+  assign hwif_in.num_pending.num_pending.next           = NumPending;
+  assign hwif_in.w_buffer_depth.w_buffer_depth.next     = WBufferDepth;
+  assign hwif_in.num_addr_regions.num_addr_regions.next = NumAddrRegions;
+  assign hwif_in.period_width.period_width.next         = PeriodWidth;
+  assign hwif_in.budget_width.budget_width.next         = BudgetWidth;
 
 endmodule
