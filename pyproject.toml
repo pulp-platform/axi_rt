@@ -1,0 +1,26 @@
+# Copyright 2024 ETH Zurich and University of Bologna.
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+
+# This repository is a SystemVerilog IP; the only Python it uses is the
+# register-generation tooling (PeakRDL). The dependency below is managed with
+# `uv`; exact versions are pinned by `uv.lock` so register generation is
+# reproducible. Run the tool with `uv run peakrdl ...` (see `axirt.mk`).
+
+[project]
+name = "axi-rt"
+version = "0.0.0"
+description = "Register-generation tooling for the AXI-RT IP."
+requires-python = ">=3.9"
+
+[dependency-groups]
+# Installed by default by `uv run`. `peakrdl` pulls in the CLI and the
+# `regblock` and `c-header` plugins transitively.
+dev = [
+    "peakrdl",
+]
+
+[tool.uv]
+# This project is not an importable/installable Python package, only a holder
+# for the codegen tooling environment.
+package = false

@@ -11,10 +11,11 @@
 # build targets for them. To build the IPs, `make axirt`.
 
 # You may need to adapt these environment variables to your configuration.
-# `PEAKRDL` defaults to invoking PeakRDL through `uvx` so no global install is
-# required (the `regblock` and `c-header` plugins are bundled in the meta pkg).
+# `PEAKRDL` defaults to the bare executable (e.g. from a `pip install peakrdl`).
+# To use the `uv`-managed, version-pinned environment from `pyproject.toml` /
+# `uv.lock` instead, invoke `make PEAKRDL="uv run peakrdl" axirt_regs`.
 BENDER     ?= bender
-PEAKRDL    ?= uvx peakrdl
+PEAKRDL    ?= peakrdl
 
 # Default config
 AXIRT_NUM_MGRS ?= 8

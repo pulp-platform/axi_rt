@@ -13,3 +13,7 @@ target/xilinx/vivado.*
 
 # scripts
 scripts/compile.vsim.tcl
+
+# python / uv (register-generation tooling)
+.venv/
+__pycache__/
