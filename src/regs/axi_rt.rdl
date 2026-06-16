@@ -16,7 +16,8 @@
 
 addrmap axi_rt_regs #(
     longint unsigned NumMrg   = 8,  // Maximum number of managers
-    longint unsigned NumReg   = 16, // Number of per-region registers (NumMrg * NumSub)
+    longint unsigned NumSub   = 2,  // Number of sub-regions per manager
+    longint unsigned NumReg   = NumMrg * NumSub, // Number of per-region registers
     longint unsigned MajorVer = 0,  // Major version (from VERSION)
     longint unsigned MinorVer = 0,  // Minor version (from VERSION)
     longint unsigned PatchVer = 0   // Patch version (from VERSION)

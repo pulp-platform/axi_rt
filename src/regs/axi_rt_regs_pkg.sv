@@ -7,6 +7,7 @@ package axi_rt_regs_pkg;
     localparam AXI_RT_REGS_MIN_ADDR_WIDTH = 11;
     localparam AXI_RT_REGS_SIZE = 'h418;
     localparam NumMrg = 'h8;
+    localparam NumSub = 'h2;
     localparam NumReg = 'h10;
     localparam MajorVer = 'h0;
     localparam MinorVer = 'h0;

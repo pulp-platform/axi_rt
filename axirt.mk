@@ -20,7 +20,6 @@ PEAKRDL    ?= peakrdl
 # Default config
 AXIRT_NUM_MGRS ?= 8
 AXIRT_NUM_SUBS ?= 2
-AXIRT_NUM_REGS := $(shell echo $$(( $(AXIRT_NUM_MGRS) * $(AXIRT_NUM_SUBS) )))
 
 # Version fields parsed from the `VERSION` file (major.minor.patch)
 AXIRT_VER_MAJOR := $(shell cut -d. -f1 $(AXIRTROOT)/VERSION)
@@ -31,7 +30,7 @@ AXIRTXILROOT  = $(AXIRTROOT)/target/xilinx
 
 # Elaboration parameters passed to PeakRDL (counts + version)
 AXIRT_RDL        = $(AXIRTROOT)/src/regs/axi_rt.rdl
-PEAKRDL_PARAMS   = -P NumMrg=$(AXIRT_NUM_MGRS) -P NumReg=$(AXIRT_NUM_REGS) \
+PEAKRDL_PARAMS   = -P NumMrg=$(AXIRT_NUM_MGRS) -P NumSub=$(AXIRT_NUM_SUBS) \
                    -P MajorVer=$(AXIRT_VER_MAJOR) -P MinorVer=$(AXIRT_VER_MINOR) \
                    -P PatchVer=$(AXIRT_VER_PATCH)
 
