@@ -7,225 +7,431 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include <stdint.h>
 #include <assert.h>
 
-// reg - axi_rt_regs::major_version
+// Reg - axi_rt_regs.major_version
 #define AXI_RT_REGS__MAJOR_VERSION__MAJOR_VERSION_bm 0xffffffff
 #define AXI_RT_REGS__MAJOR_VERSION__MAJOR_VERSION_bp 0
 #define AXI_RT_REGS__MAJOR_VERSION__MAJOR_VERSION_bw 32
 #define AXI_RT_REGS__MAJOR_VERSION__MAJOR_VERSION_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t major_version :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__major_version_t;
 
-// reg - axi_rt_regs::minor_version
+// Reg - axi_rt_regs.minor_version
 #define AXI_RT_REGS__MINOR_VERSION__MINOR_VERSION_bm 0xffffffff
 #define AXI_RT_REGS__MINOR_VERSION__MINOR_VERSION_bp 0
 #define AXI_RT_REGS__MINOR_VERSION__MINOR_VERSION_bw 32
 #define AXI_RT_REGS__MINOR_VERSION__MINOR_VERSION_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t minor_version :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__minor_version_t;
 
-// reg - axi_rt_regs::patch_version
+// Reg - axi_rt_regs.patch_version
 #define AXI_RT_REGS__PATCH_VERSION__PATCH_VERSION_bm 0xffffffff
 #define AXI_RT_REGS__PATCH_VERSION__PATCH_VERSION_bp 0
 #define AXI_RT_REGS__PATCH_VERSION__PATCH_VERSION_bw 32
 #define AXI_RT_REGS__PATCH_VERSION__PATCH_VERSION_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t patch_version :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__patch_version_t;
 
-// reg - axi_rt_regs::rt_enable
-#define AXI_RT_REGS__RT_ENABLE__ENABLE_bm 0x1
-#define AXI_RT_REGS__RT_ENABLE__ENABLE_bp 0
-#define AXI_RT_REGS__RT_ENABLE__ENABLE_bw 1
-#define AXI_RT_REGS__RT_ENABLE__ENABLE_reset 0x0
+// Reg - axi_rt_regs.rt_enable[]
+#define AXI_RT_REGS__RT_ENABLEX__ENABLE_bm 0x1
+#define AXI_RT_REGS__RT_ENABLEX__ENABLE_bp 0
+#define AXI_RT_REGS__RT_ENABLEX__ENABLE_bw 1
+#define AXI_RT_REGS__RT_ENABLEX__ENABLE_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t enable :1;
+        uint32_t :31;
+    } f;
+    uint32_t w;
+} axi_rt_regs__rt_enablex_t;
 
-// reg - axi_rt_regs::rt_bypassed
-#define AXI_RT_REGS__RT_BYPASSED__BYPASSED_bm 0x1
-#define AXI_RT_REGS__RT_BYPASSED__BYPASSED_bp 0
-#define AXI_RT_REGS__RT_BYPASSED__BYPASSED_bw 1
+// Reg - axi_rt_regs.rt_bypassed[]
+#define AXI_RT_REGS__RT_BYPASSEDX__BYPASSED_bm 0x1
+#define AXI_RT_REGS__RT_BYPASSEDX__BYPASSED_bp 0
+#define AXI_RT_REGS__RT_BYPASSEDX__BYPASSED_bw 1
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t bypassed :1;
+        uint32_t :31;
+    } f;
+    uint32_t w;
+} axi_rt_regs__rt_bypassedx_t;
 
-// reg - axi_rt_regs::len_limit
-#define AXI_RT_REGS__LEN_LIMIT__LEN_bm 0xff
-#define AXI_RT_REGS__LEN_LIMIT__LEN_bp 0
-#define AXI_RT_REGS__LEN_LIMIT__LEN_bw 8
-#define AXI_RT_REGS__LEN_LIMIT__LEN_reset 0x0
+// Reg - axi_rt_regs.len_limit[]
+#define AXI_RT_REGS__LEN_LIMITX__LEN_bm 0xff
+#define AXI_RT_REGS__LEN_LIMITX__LEN_bp 0
+#define AXI_RT_REGS__LEN_LIMITX__LEN_bw 8
+#define AXI_RT_REGS__LEN_LIMITX__LEN_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t len :8;
+        uint32_t :24;
+    } f;
+    uint32_t w;
+} axi_rt_regs__len_limitx_t;
 
-// reg - axi_rt_regs::imtu_enable
-#define AXI_RT_REGS__IMTU_ENABLE__ENABLE_bm 0x1
-#define AXI_RT_REGS__IMTU_ENABLE__ENABLE_bp 0
-#define AXI_RT_REGS__IMTU_ENABLE__ENABLE_bw 1
-#define AXI_RT_REGS__IMTU_ENABLE__ENABLE_reset 0x0
+// Reg - axi_rt_regs.imtu_enable[]
+#define AXI_RT_REGS__IMTU_ENABLEX__ENABLE_bm 0x1
+#define AXI_RT_REGS__IMTU_ENABLEX__ENABLE_bp 0
+#define AXI_RT_REGS__IMTU_ENABLEX__ENABLE_bw 1
+#define AXI_RT_REGS__IMTU_ENABLEX__ENABLE_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t enable :1;
+        uint32_t :31;
+    } f;
+    uint32_t w;
+} axi_rt_regs__imtu_enablex_t;
 
-// reg - axi_rt_regs::imtu_abort
-#define AXI_RT_REGS__IMTU_ABORT__ABORT_bm 0x1
-#define AXI_RT_REGS__IMTU_ABORT__ABORT_bp 0
-#define AXI_RT_REGS__IMTU_ABORT__ABORT_bw 1
-#define AXI_RT_REGS__IMTU_ABORT__ABORT_reset 0x0
+// Reg - axi_rt_regs.imtu_abort[]
+#define AXI_RT_REGS__IMTU_ABORTX__ABORT_bm 0x1
+#define AXI_RT_REGS__IMTU_ABORTX__ABORT_bp 0
+#define AXI_RT_REGS__IMTU_ABORTX__ABORT_bw 1
+#define AXI_RT_REGS__IMTU_ABORTX__ABORT_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t abort :1;
+        uint32_t :31;
+    } f;
+    uint32_t w;
+} axi_rt_regs__imtu_abortx_t;
 
-// reg - axi_rt_regs::start_addr_sub_low
-#define AXI_RT_REGS__START_ADDR_SUB_LOW__ADDR_bm 0xffffffff
-#define AXI_RT_REGS__START_ADDR_SUB_LOW__ADDR_bp 0
-#define AXI_RT_REGS__START_ADDR_SUB_LOW__ADDR_bw 32
-#define AXI_RT_REGS__START_ADDR_SUB_LOW__ADDR_reset 0x0
+// Reg - axi_rt_regs.start_addr_sub_low[]
+#define AXI_RT_REGS__START_ADDR_SUB_LOWX__ADDR_bm 0xffffffff
+#define AXI_RT_REGS__START_ADDR_SUB_LOWX__ADDR_bp 0
+#define AXI_RT_REGS__START_ADDR_SUB_LOWX__ADDR_bw 32
+#define AXI_RT_REGS__START_ADDR_SUB_LOWX__ADDR_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t addr :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__start_addr_sub_lowx_t;
 
-// reg - axi_rt_regs::start_addr_sub_high
-#define AXI_RT_REGS__START_ADDR_SUB_HIGH__ADDR_bm 0xffffffff
-#define AXI_RT_REGS__START_ADDR_SUB_HIGH__ADDR_bp 0
-#define AXI_RT_REGS__START_ADDR_SUB_HIGH__ADDR_bw 32
-#define AXI_RT_REGS__START_ADDR_SUB_HIGH__ADDR_reset 0x0
+// Reg - axi_rt_regs.start_addr_sub_high[]
+#define AXI_RT_REGS__START_ADDR_SUB_HIGHX__ADDR_bm 0xffffffff
+#define AXI_RT_REGS__START_ADDR_SUB_HIGHX__ADDR_bp 0
+#define AXI_RT_REGS__START_ADDR_SUB_HIGHX__ADDR_bw 32
+#define AXI_RT_REGS__START_ADDR_SUB_HIGHX__ADDR_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t addr :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__start_addr_sub_highx_t;
 
-// reg - axi_rt_regs::end_addr_sub_low
-#define AXI_RT_REGS__END_ADDR_SUB_LOW__ADDR_bm 0xffffffff
-#define AXI_RT_REGS__END_ADDR_SUB_LOW__ADDR_bp 0
-#define AXI_RT_REGS__END_ADDR_SUB_LOW__ADDR_bw 32
-#define AXI_RT_REGS__END_ADDR_SUB_LOW__ADDR_reset 0x0
+// Reg - axi_rt_regs.end_addr_sub_low[]
+#define AXI_RT_REGS__END_ADDR_SUB_LOWX__ADDR_bm 0xffffffff
+#define AXI_RT_REGS__END_ADDR_SUB_LOWX__ADDR_bp 0
+#define AXI_RT_REGS__END_ADDR_SUB_LOWX__ADDR_bw 32
+#define AXI_RT_REGS__END_ADDR_SUB_LOWX__ADDR_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t addr :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__end_addr_sub_lowx_t;
 
-// reg - axi_rt_regs::end_addr_sub_high
-#define AXI_RT_REGS__END_ADDR_SUB_HIGH__ADDR_bm 0xffffffff
-#define AXI_RT_REGS__END_ADDR_SUB_HIGH__ADDR_bp 0
-#define AXI_RT_REGS__END_ADDR_SUB_HIGH__ADDR_bw 32
-#define AXI_RT_REGS__END_ADDR_SUB_HIGH__ADDR_reset 0x0
+// Reg - axi_rt_regs.end_addr_sub_high[]
+#define AXI_RT_REGS__END_ADDR_SUB_HIGHX__ADDR_bm 0xffffffff
+#define AXI_RT_REGS__END_ADDR_SUB_HIGHX__ADDR_bp 0
+#define AXI_RT_REGS__END_ADDR_SUB_HIGHX__ADDR_bw 32
+#define AXI_RT_REGS__END_ADDR_SUB_HIGHX__ADDR_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t addr :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__end_addr_sub_highx_t;
 
-// reg - axi_rt_regs::write_budget
-#define AXI_RT_REGS__WRITE_BUDGET__BUDGET_bm 0xffffffff
-#define AXI_RT_REGS__WRITE_BUDGET__BUDGET_bp 0
-#define AXI_RT_REGS__WRITE_BUDGET__BUDGET_bw 32
-#define AXI_RT_REGS__WRITE_BUDGET__BUDGET_reset 0x0
+// Reg - axi_rt_regs.write_budget[]
+#define AXI_RT_REGS__WRITE_BUDGETX__BUDGET_bm 0xffffffff
+#define AXI_RT_REGS__WRITE_BUDGETX__BUDGET_bp 0
+#define AXI_RT_REGS__WRITE_BUDGETX__BUDGET_bw 32
+#define AXI_RT_REGS__WRITE_BUDGETX__BUDGET_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t budget :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__write_budgetx_t;
 
-// reg - axi_rt_regs::read_budget
-#define AXI_RT_REGS__READ_BUDGET__BUDGET_bm 0xffffffff
-#define AXI_RT_REGS__READ_BUDGET__BUDGET_bp 0
-#define AXI_RT_REGS__READ_BUDGET__BUDGET_bw 32
-#define AXI_RT_REGS__READ_BUDGET__BUDGET_reset 0x0
+// Reg - axi_rt_regs.read_budget[]
+#define AXI_RT_REGS__READ_BUDGETX__BUDGET_bm 0xffffffff
+#define AXI_RT_REGS__READ_BUDGETX__BUDGET_bp 0
+#define AXI_RT_REGS__READ_BUDGETX__BUDGET_bw 32
+#define AXI_RT_REGS__READ_BUDGETX__BUDGET_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t budget :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__read_budgetx_t;
 
-// reg - axi_rt_regs::write_period
-#define AXI_RT_REGS__WRITE_PERIOD__PERIOD_bm 0xffffffff
-#define AXI_RT_REGS__WRITE_PERIOD__PERIOD_bp 0
-#define AXI_RT_REGS__WRITE_PERIOD__PERIOD_bw 32
-#define AXI_RT_REGS__WRITE_PERIOD__PERIOD_reset 0x0
+// Reg - axi_rt_regs.write_period[]
+#define AXI_RT_REGS__WRITE_PERIODX__PERIOD_bm 0xffffffff
+#define AXI_RT_REGS__WRITE_PERIODX__PERIOD_bp 0
+#define AXI_RT_REGS__WRITE_PERIODX__PERIOD_bw 32
+#define AXI_RT_REGS__WRITE_PERIODX__PERIOD_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t period :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__write_periodx_t;
 
-// reg - axi_rt_regs::read_period
-#define AXI_RT_REGS__READ_PERIOD__PERIOD_bm 0xffffffff
-#define AXI_RT_REGS__READ_PERIOD__PERIOD_bp 0
-#define AXI_RT_REGS__READ_PERIOD__PERIOD_bw 32
-#define AXI_RT_REGS__READ_PERIOD__PERIOD_reset 0x0
+// Reg - axi_rt_regs.read_period[]
+#define AXI_RT_REGS__READ_PERIODX__PERIOD_bm 0xffffffff
+#define AXI_RT_REGS__READ_PERIODX__PERIOD_bp 0
+#define AXI_RT_REGS__READ_PERIODX__PERIOD_bw 32
+#define AXI_RT_REGS__READ_PERIODX__PERIOD_reset 0x0
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t period :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__read_periodx_t;
 
-// reg - axi_rt_regs::write_budget_left
-#define AXI_RT_REGS__WRITE_BUDGET_LEFT__BUDGET_bm 0xffffffff
-#define AXI_RT_REGS__WRITE_BUDGET_LEFT__BUDGET_bp 0
-#define AXI_RT_REGS__WRITE_BUDGET_LEFT__BUDGET_bw 32
+// Reg - axi_rt_regs.write_budget_left[]
+#define AXI_RT_REGS__WRITE_BUDGET_LEFTX__BUDGET_bm 0xffffffff
+#define AXI_RT_REGS__WRITE_BUDGET_LEFTX__BUDGET_bp 0
+#define AXI_RT_REGS__WRITE_BUDGET_LEFTX__BUDGET_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t budget :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__write_budget_leftx_t;
 
-// reg - axi_rt_regs::read_budget_left
-#define AXI_RT_REGS__READ_BUDGET_LEFT__BUDGET_bm 0xffffffff
-#define AXI_RT_REGS__READ_BUDGET_LEFT__BUDGET_bp 0
-#define AXI_RT_REGS__READ_BUDGET_LEFT__BUDGET_bw 32
+// Reg - axi_rt_regs.read_budget_left[]
+#define AXI_RT_REGS__READ_BUDGET_LEFTX__BUDGET_bm 0xffffffff
+#define AXI_RT_REGS__READ_BUDGET_LEFTX__BUDGET_bp 0
+#define AXI_RT_REGS__READ_BUDGET_LEFTX__BUDGET_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t budget :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__read_budget_leftx_t;
 
-// reg - axi_rt_regs::write_period_left
-#define AXI_RT_REGS__WRITE_PERIOD_LEFT__PERIOD_bm 0xffffffff
-#define AXI_RT_REGS__WRITE_PERIOD_LEFT__PERIOD_bp 0
-#define AXI_RT_REGS__WRITE_PERIOD_LEFT__PERIOD_bw 32
+// Reg - axi_rt_regs.write_period_left[]
+#define AXI_RT_REGS__WRITE_PERIOD_LEFTX__PERIOD_bm 0xffffffff
+#define AXI_RT_REGS__WRITE_PERIOD_LEFTX__PERIOD_bp 0
+#define AXI_RT_REGS__WRITE_PERIOD_LEFTX__PERIOD_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t period :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__write_period_leftx_t;
 
-// reg - axi_rt_regs::read_period_left
-#define AXI_RT_REGS__READ_PERIOD_LEFT__PERIOD_bm 0xffffffff
-#define AXI_RT_REGS__READ_PERIOD_LEFT__PERIOD_bp 0
-#define AXI_RT_REGS__READ_PERIOD_LEFT__PERIOD_bw 32
+// Reg - axi_rt_regs.read_period_left[]
+#define AXI_RT_REGS__READ_PERIOD_LEFTX__PERIOD_bm 0xffffffff
+#define AXI_RT_REGS__READ_PERIOD_LEFTX__PERIOD_bp 0
+#define AXI_RT_REGS__READ_PERIOD_LEFTX__PERIOD_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t period :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__read_period_leftx_t;
 
-// reg - axi_rt_regs::isolate
-#define AXI_RT_REGS__ISOLATE__ISOLATE_bm 0x1
-#define AXI_RT_REGS__ISOLATE__ISOLATE_bp 0
-#define AXI_RT_REGS__ISOLATE__ISOLATE_bw 1
+// Reg - axi_rt_regs.isolate[]
+#define AXI_RT_REGS__ISOLATEX__ISOLATE_bm 0x1
+#define AXI_RT_REGS__ISOLATEX__ISOLATE_bp 0
+#define AXI_RT_REGS__ISOLATEX__ISOLATE_bw 1
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t isolate :1;
+        uint32_t :31;
+    } f;
+    uint32_t w;
+} axi_rt_regs__isolatex_t;
 
-// reg - axi_rt_regs::isolated
-#define AXI_RT_REGS__ISOLATED__ISOLATED_bm 0x1
-#define AXI_RT_REGS__ISOLATED__ISOLATED_bp 0
-#define AXI_RT_REGS__ISOLATED__ISOLATED_bw 1
+// Reg - axi_rt_regs.isolated[]
+#define AXI_RT_REGS__ISOLATEDX__ISOLATED_bm 0x1
+#define AXI_RT_REGS__ISOLATEDX__ISOLATED_bp 0
+#define AXI_RT_REGS__ISOLATEDX__ISOLATED_bw 1
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t isolated :1;
+        uint32_t :31;
+    } f;
+    uint32_t w;
+} axi_rt_regs__isolatedx_t;
 
-// reg - axi_rt_regs::num_managers
+// Reg - axi_rt_regs.num_managers
 #define AXI_RT_REGS__NUM_MANAGERS__NUM_MANAGERS_bm 0xffffffff
 #define AXI_RT_REGS__NUM_MANAGERS__NUM_MANAGERS_bp 0
 #define AXI_RT_REGS__NUM_MANAGERS__NUM_MANAGERS_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t num_managers :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__num_managers_t;
 
-// reg - axi_rt_regs::addr_width
+// Reg - axi_rt_regs.addr_width
 #define AXI_RT_REGS__ADDR_WIDTH__ADDR_WIDTH_bm 0xffffffff
 #define AXI_RT_REGS__ADDR_WIDTH__ADDR_WIDTH_bp 0
 #define AXI_RT_REGS__ADDR_WIDTH__ADDR_WIDTH_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t addr_width :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__addr_width_t;
 
-// reg - axi_rt_regs::data_width
+// Reg - axi_rt_regs.data_width
 #define AXI_RT_REGS__DATA_WIDTH__DATA_WIDTH_bm 0xffffffff
 #define AXI_RT_REGS__DATA_WIDTH__DATA_WIDTH_bp 0
 #define AXI_RT_REGS__DATA_WIDTH__DATA_WIDTH_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t data_width :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__data_width_t;
 
-// reg - axi_rt_regs::id_width
+// Reg - axi_rt_regs.id_width
 #define AXI_RT_REGS__ID_WIDTH__ID_WIDTH_bm 0xffffffff
 #define AXI_RT_REGS__ID_WIDTH__ID_WIDTH_bp 0
 #define AXI_RT_REGS__ID_WIDTH__ID_WIDTH_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t id_width :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__id_width_t;
 
-// reg - axi_rt_regs::user_width
+// Reg - axi_rt_regs.user_width
 #define AXI_RT_REGS__USER_WIDTH__USER_WIDTH_bm 0xffffffff
 #define AXI_RT_REGS__USER_WIDTH__USER_WIDTH_bp 0
 #define AXI_RT_REGS__USER_WIDTH__USER_WIDTH_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t user_width :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__user_width_t;
 
-// reg - axi_rt_regs::num_pending
+// Reg - axi_rt_regs.num_pending
 #define AXI_RT_REGS__NUM_PENDING__NUM_PENDING_bm 0xffffffff
 #define AXI_RT_REGS__NUM_PENDING__NUM_PENDING_bp 0
 #define AXI_RT_REGS__NUM_PENDING__NUM_PENDING_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t num_pending :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__num_pending_t;
 
-// reg - axi_rt_regs::w_buffer_depth
+// Reg - axi_rt_regs.w_buffer_depth
 #define AXI_RT_REGS__W_BUFFER_DEPTH__W_BUFFER_DEPTH_bm 0xffffffff
 #define AXI_RT_REGS__W_BUFFER_DEPTH__W_BUFFER_DEPTH_bp 0
 #define AXI_RT_REGS__W_BUFFER_DEPTH__W_BUFFER_DEPTH_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t w_buffer_depth :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__w_buffer_depth_t;
 
-// reg - axi_rt_regs::num_addr_regions
+// Reg - axi_rt_regs.num_addr_regions
 #define AXI_RT_REGS__NUM_ADDR_REGIONS__NUM_ADDR_REGIONS_bm 0xffffffff
 #define AXI_RT_REGS__NUM_ADDR_REGIONS__NUM_ADDR_REGIONS_bp 0
 #define AXI_RT_REGS__NUM_ADDR_REGIONS__NUM_ADDR_REGIONS_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t num_addr_regions :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__num_addr_regions_t;
 
-// reg - axi_rt_regs::period_width
+// Reg - axi_rt_regs.period_width
 #define AXI_RT_REGS__PERIOD_WIDTH__PERIOD_WIDTH_bm 0xffffffff
 #define AXI_RT_REGS__PERIOD_WIDTH__PERIOD_WIDTH_bp 0
 #define AXI_RT_REGS__PERIOD_WIDTH__PERIOD_WIDTH_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t period_width :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__period_width_t;
 
-// reg - axi_rt_regs::budget_width
+// Reg - axi_rt_regs.budget_width
 #define AXI_RT_REGS__BUDGET_WIDTH__BUDGET_WIDTH_bm 0xffffffff
 #define AXI_RT_REGS__BUDGET_WIDTH__BUDGET_WIDTH_bp 0
 #define AXI_RT_REGS__BUDGET_WIDTH__BUDGET_WIDTH_bw 32
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t budget_width :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__budget_width_t;
 
-// reg - axi_rt_regs::max_num_managers
+// Reg - axi_rt_regs.max_num_managers
 #define AXI_RT_REGS__MAX_NUM_MANAGERS__MAX_NUM_MANAGERS_bm 0xffffffff
 #define AXI_RT_REGS__MAX_NUM_MANAGERS__MAX_NUM_MANAGERS_bp 0
 #define AXI_RT_REGS__MAX_NUM_MANAGERS__MAX_NUM_MANAGERS_bw 32
 #define AXI_RT_REGS__MAX_NUM_MANAGERS__MAX_NUM_MANAGERS_reset 0x8
+typedef union {
+    struct __attribute__ ((__packed__)) {
+        uint32_t max_num_managers :32;
+    } f;
+    uint32_t w;
+} axi_rt_regs__max_num_managers_t;
 
-// addrmap - axi_rt_regs
+// Addrmap - axi_rt_regs
 typedef struct __attribute__ ((__packed__)) {
-    uint32_t major_version;
-    uint32_t minor_version;
-    uint32_t patch_version;
-    uint32_t rt_enable[8];
-    uint32_t rt_bypassed[8];
-    uint32_t len_limit[8];
-    uint32_t imtu_enable[8];
-    uint32_t imtu_abort[8];
-    uint32_t start_addr_sub_low[16];
-    uint32_t start_addr_sub_high[16];
-    uint32_t end_addr_sub_low[16];
-    uint32_t end_addr_sub_high[16];
-    uint32_t write_budget[16];
-    uint32_t read_budget[16];
-    uint32_t write_period[16];
-    uint32_t read_period[16];
-    uint32_t write_budget_left[16];
-    uint32_t read_budget_left[16];
-    uint32_t write_period_left[16];
-    uint32_t read_period_left[16];
-    uint32_t isolate[8];
-    uint32_t isolated[8];
-    uint32_t num_managers;
-    uint32_t addr_width;
-    uint32_t data_width;
-    uint32_t id_width;
-    uint32_t user_width;
-    uint32_t num_pending;
-    uint32_t w_buffer_depth;
-    uint32_t num_addr_regions;
-    uint32_t period_width;
-    uint32_t budget_width;
-    uint32_t max_num_managers;
+    axi_rt_regs__major_version_t major_version;
+    axi_rt_regs__minor_version_t minor_version;
+    axi_rt_regs__patch_version_t patch_version;
+    axi_rt_regs__rt_enablex_t rt_enable[8];
+    axi_rt_regs__rt_bypassedx_t rt_bypassed[8];
+    axi_rt_regs__len_limitx_t len_limit[8];
+    axi_rt_regs__imtu_enablex_t imtu_enable[8];
+    axi_rt_regs__imtu_abortx_t imtu_abort[8];
+    axi_rt_regs__start_addr_sub_lowx_t start_addr_sub_low[16];
+    axi_rt_regs__start_addr_sub_highx_t start_addr_sub_high[16];
+    axi_rt_regs__end_addr_sub_lowx_t end_addr_sub_low[16];
+    axi_rt_regs__end_addr_sub_highx_t end_addr_sub_high[16];
+    axi_rt_regs__write_budgetx_t write_budget[16];
+    axi_rt_regs__read_budgetx_t read_budget[16];
+    axi_rt_regs__write_periodx_t write_period[16];
+    axi_rt_regs__read_periodx_t read_period[16];
+    axi_rt_regs__write_budget_leftx_t write_budget_left[16];
+    axi_rt_regs__read_budget_leftx_t read_budget_left[16];
+    axi_rt_regs__write_period_leftx_t write_period_left[16];
+    axi_rt_regs__read_period_leftx_t read_period_left[16];
+    axi_rt_regs__isolatex_t isolate[8];
+    axi_rt_regs__isolatedx_t isolated[8];
+    axi_rt_regs__num_managers_t num_managers;
+    axi_rt_regs__addr_width_t addr_width;
+    axi_rt_regs__data_width_t data_width;
+    axi_rt_regs__id_width_t id_width;
+    axi_rt_regs__user_width_t user_width;
+    axi_rt_regs__num_pending_t num_pending;
+    axi_rt_regs__w_buffer_depth_t w_buffer_depth;
+    axi_rt_regs__num_addr_regions_t num_addr_regions;
+    axi_rt_regs__period_width_t period_width;
+    axi_rt_regs__budget_width_t budget_width;
+    axi_rt_regs__max_num_managers_t max_num_managers;
 } axi_rt_regs_t;
 
 

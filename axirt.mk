@@ -41,7 +41,7 @@ PEAKRDL_PARAMS   = -P NumMrg=$(AXIRT_NUM_MGRS) -P NumSub=$(AXIRT_NUM_SUBS) \
 axirt_regs: $(AXIRT_RDL) $(AXIRTROOT)/VERSION
 	$(PEAKRDL) regblock $(AXIRT_RDL) --cpuif apb4-flat --default-reset arst_n \
 	    $(PEAKRDL_PARAMS) -o $(AXIRTROOT)/src/regs
-	$(PEAKRDL) c-header $(AXIRT_RDL) $(PEAKRDL_PARAMS) \
+	$(PEAKRDL) c-header $(AXIRT_RDL) $(PEAKRDL_PARAMS) -b ltoh --type-style hier \
 	    -o $(AXIRTROOT)/sw/include/regs/axi_rt.h
 
 

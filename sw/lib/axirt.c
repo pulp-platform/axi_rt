@@ -30,52 +30,52 @@ void __axirt_release() {
 }
 
 void __axirt_set_len_limit_group(uint8_t limit, uint8_t group_id) {
-    AXIRT_REGS->len_limit[group_id] = limit;
+    AXIRT_REGS->len_limit[group_id].w = limit;
 }
 
 void __axirt_set_region(uint64_t start_addr, uint64_t end_addr, uint8_t region_id, uint8_t mgr_id) {
     uint32_t idx = AXIRT_NUM_SUB * mgr_id + region_id;
 
-    AXIRT_REGS->end_addr_sub_high[idx]   = end_addr >> 32;
-    AXIRT_REGS->end_addr_sub_low[idx]    = end_addr & 0xffffffff;
-    AXIRT_REGS->start_addr_sub_low[idx]  = start_addr & 0xffffffff;
-    AXIRT_REGS->start_addr_sub_high[idx] = start_addr >> 32;
+    AXIRT_REGS->end_addr_sub_high[idx].w   = end_addr >> 32;
+    AXIRT_REGS->end_addr_sub_low[idx].w    = end_addr & 0xffffffff;
+    AXIRT_REGS->start_addr_sub_low[idx].w  = start_addr & 0xffffffff;
+    AXIRT_REGS->start_addr_sub_high[idx].w = start_addr >> 32;
 }
 
 void __axirt_set_period(uint32_t period, uint8_t region_id, uint8_t mgr_id) {
     uint32_t idx = AXIRT_NUM_SUB * mgr_id + region_id;
 
-    AXIRT_REGS->write_period[idx] = period;
-    AXIRT_REGS->read_period[idx]  = period;
+    AXIRT_REGS->write_period[idx].w = period;
+    AXIRT_REGS->read_period[idx].w  = period;
 }
 
 void __axirt_set_budget(uint32_t budget, uint8_t region_id, uint8_t mgr_id) {
     uint32_t idx = AXIRT_NUM_SUB * mgr_id + region_id;
 
-    AXIRT_REGS->write_budget[idx] = budget;
-    AXIRT_REGS->read_budget[idx]  = budget;
+    AXIRT_REGS->write_budget[idx].w = budget;
+    AXIRT_REGS->read_budget[idx].w  = budget;
 }
 
 // config functions
 void __axirt_enable(uint32_t enable) {
     for (uint32_t i = 0; i < AXIRT_NUM_MGR; i++) {
         uint32_t en = (enable >> i) & 0x1;
-        AXIRT_REGS->rt_enable[i]   = en;
-        AXIRT_REGS->imtu_enable[i] = en;
+        AXIRT_REGS->rt_enable[i].w   = en;
+        AXIRT_REGS->imtu_enable[i].w = en;
     }
 }
 
 void __axirt_disable() {
     for (uint32_t i = 0; i < AXIRT_NUM_MGR; i++) {
-        AXIRT_REGS->imtu_enable[i] = 0;
-        AXIRT_REGS->rt_enable[i]   = 0;
+        AXIRT_REGS->imtu_enable[i].w = 0;
+        AXIRT_REGS->rt_enable[i].w   = 0;
     }
 }
 
 // check isolation
 uint8_t __axirt_poll_isolate(uint8_t mgr_id) {
     // TODO: Add some timeout to not wait forever
-    while ((AXIRT_REGS->isolated[mgr_id] & 0x1) != 1)
+    while ((AXIRT_REGS->isolated[mgr_id].w & 0x1) != 1)
 	;
-    return AXIRT_REGS->isolated[mgr_id] & 0x1;
+    return AXIRT_REGS->isolated[mgr_id].w & 0x1;
 }
