@@ -7,9 +7,14 @@ modelsim.ini
 *.vstf
 wlf*
 *.yml
+!.github/workflows/*.yml
 target/xilinx/axirt_ip*
 target/xilinx/scripts/compile.axirt.xilinx.tcl
 target/xilinx/vivado.*
 
 # scripts
 scripts/compile.vsim.tcl
+
+# python / uv (register-generation tooling)
+.venv/
+__pycache__/

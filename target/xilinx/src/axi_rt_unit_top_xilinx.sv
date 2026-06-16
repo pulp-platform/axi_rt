@@ -10,7 +10,7 @@
 `include "axi/assign.svh"
 `include "axi-rt/assign.svh"
 `include "axi-rt/port.svh"
-`include "register_interface/typedef.svh"
+`include "apb/typedef.svh"
 
 /// Xilinx Wrapper for the AXI RT unit
 module axi_rt_unit_top_xilinx #(
@@ -183,38 +183,54 @@ module axi_rt_unit_top_xilinx #(
   `AXI_ASSIGN_MASTER_TO_FLAT_ARRAY(rt, RtNumManagers, m_req, m_rsp)
   `AXI_ASSIGN_SLAVE_TO_FLAT_ARRAY (rt, RtNumManagers, s_req, s_rsp)
 
-  // Define configuration register bus
-  `REG_BUS_TYPEDEF_ALL(cfg, axi_lite_addr_t, axi_lite_data_t, axi_lite_strb_t)
+  // Define APB configuration bus
+  `APB_TYPEDEF_ALL(cfg, axi_lite_addr_t, axi_lite_data_t, axi_lite_strb_t)
 
-  cfg_req_t  cfg_req;
-  cfg_rsp_t  cfg_rsp;
+  cfg_req_t  [0:0] cfg_req;
+  cfg_resp_t [0:0] cfg_rsp;
+
+  // Single APB slave covering the whole register-block address space
+  typedef struct packed {
+    int unsigned    idx;
+    axi_lite_addr_t start_addr;
+    axi_lite_addr_t end_addr;
+  } cfg_rule_t;
+
+  cfg_rule_t [0:0] cfg_addr_map;
+  assign cfg_addr_map[0] = '{
+    idx:        32'd0,
+    start_addr: '0,
+    end_addr:   axi_lite_addr_t'(1) << (axi_rt_regs_pkg::AXI_RT_REGS_MIN_ADDR_WIDTH + 32'd1)
+  };
 
   // Define AXI-Lite struct channel types
   `AXI_LITE_TYPEDEF_ALL(axi_lite, axi_lite_addr_t, axi_lite_data_t, axi_lite_strb_t)
 
   axi_lite_req_t s_lite_req;
-  axi_lite_resp_t s_lite_rsp;  
+  axi_lite_resp_t s_lite_rsp;
 
    // Connect AXI Lite structs to flatten config. AXI Lite ports
   `AXI_LITE_ASSIGN_SLAVE_TO_FLAT_ARRAY (rt, 1, s_lite_req, s_lite_rsp)
 
-  // Convert AXI Lite to custom register interface fr RT configuration bus
-  axi_lite_to_reg #(
-    .ADDR_WIDTH   (RtAxiLiteAddrWidth),
-    .DATA_WIDTH   (RtAxiLiteDataWidth),
-    .BUFFER_DEPTH (2),
-    .DECOUPLE_W   (1),
-    .axi_lite_req_t (axi_lite_req_t),
-    .axi_lite_rsp_t (axi_lite_resp_t),
-    .reg_req_t (cfg_req_t),
-    .reg_rsp_t (cfg_rsp_t)
-  ) i_axi_lite_to_reg (
+  // Convert AXI Lite to APB for the RT configuration bus
+  axi_lite_to_apb #(
+    .NoApbSlaves     (32'd1),
+    .NoRules         (32'd1),
+    .AddrWidth       (RtAxiLiteAddrWidth),
+    .DataWidth       (RtAxiLiteDataWidth),
+    .axi_lite_req_t  (axi_lite_req_t),
+    .axi_lite_resp_t (axi_lite_resp_t),
+    .apb_req_t       (cfg_req_t),
+    .apb_resp_t      (cfg_resp_t),
+    .rule_t          (cfg_rule_t)
+  ) i_axi_lite_to_apb (
     .clk_i,
     .rst_ni,
-    .axi_lite_req_i ( s_lite_req ),
-    .axi_lite_rsp_o ( s_lite_rsp ),
-    .reg_req_o      ( cfg_req ),
-    .reg_rsp_i      ( cfg_rsp )
+    .axi_lite_req_i  ( s_lite_req   ),
+    .axi_lite_resp_o ( s_lite_rsp   ),
+    .apb_req_o       ( cfg_req      ),
+    .apb_resp_i      ( cfg_rsp      ),
+    .addr_map_i      ( cfg_addr_map )
   );
 
   //-----------------------------------
@@ -242,8 +258,8 @@ module axi_rt_unit_top_xilinx #(
     .r_chan_t       ( axi_r_chan_t     ),
     .axi_req_t      ( axi_req_t        ),
     .axi_resp_t     ( axi_resp_t       ),
-    .req_req_t      ( cfg_req_t        ),
-    .req_rsp_t      ( cfg_rsp_t        )
+    .apb_req_t      ( cfg_req_t        ),
+    .apb_resp_t     ( cfg_resp_t       )
   ) i_axi_rt_unit_top (
     .clk_i,
     .rst_ni,
@@ -251,8 +267,8 @@ module axi_rt_unit_top_xilinx #(
     .slv_resp_o       ( s_rsp         ),
     .mst_req_o        ( m_req         ),
     .mst_resp_i       ( m_rsp         ),
-    .reg_req_i        ( cfg_req       ),
-    .reg_rsp_o        ( cfg_rsp       ),
+    .apb_req_i        ( cfg_req[0]    ),
+    .apb_rsp_o        ( cfg_rsp[0]    ),
     .reg_id_i         ( '0            ) // Temporary solution
   );
 

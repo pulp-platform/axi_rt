@@ -1,0 +1,32 @@
+# Copyright 2024 ETH Zurich and University of Bologna.
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+
+# Regenerate the PeakRDL register sources and fail if the committed files are
+# out of date with respect to `src/regs/axi_rt.rdl`, `VERSION` or the tooling.
+
+name: check-regs
+
+on: [push, pull_request]
+
+jobs:
+  check-generated:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+
+      - name: Regenerate register sources
+        run: uv run --locked make axirt_regs
+
+      - name: Check generated sources are up to date
+        run: |
+          if [ -n "$(git status --porcelain -- src/regs sw/include/regs)" ]; then
+            echo "::error::Generated register sources are out of date. Run 'make axirt_regs' and commit the result."
+            git status --porcelain -- src/regs sw/include/regs
+            git diff -- src/regs sw/include/regs
+            exit 1
+          fi
