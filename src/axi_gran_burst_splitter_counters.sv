@@ -49,12 +49,13 @@ module axi_gran_burst_splitter_counters #(
   assign alloc_pld_in.len = alloc_len_i;
 
   if (CutPath) begin : gen_spill
-    spill_register #(
-      .T      ( alloc_pld_t ),
+    cc_spill_register #(
+      .data_t ( alloc_pld_t ),
       .Bypass ( 1'b0        )
     ) i_spill_register_alloc (
       .clk_i,
       .rst_ni,
+      .clr_i   ( 1'b0          ),
       .valid_i ( alloc_req_i   ),
       .ready_o ( alloc_gnt_o   ),
       .data_i  ( alloc_pld_in  ),
@@ -75,12 +76,12 @@ module axi_gran_burst_splitter_counters #(
   cnt_t [MaxTxns-1:0]  cnt_oup;
   cnt_idx_t            cnt_free_idx, cnt_r_idx;
   for (genvar i = 0; i < MaxTxns; i++) begin : gen_cnt
-    delta_counter #(
-      .WIDTH ( $bits(cnt_t) )
+    cc_delta_counter #(
+      .Width ( $bits(cnt_t) )
     ) i_cnt (
       .clk_i,
       .rst_ni,
-      .clear_i    ( cnt_clr[i]   ),
+      .clr_i      ( cnt_clr[i]   ),
       .en_i       ( cnt_dec[i]   ),
       .load_i     ( cnt_set[i]   ),
       .down_i     ( 1'b1         ),
@@ -93,9 +94,9 @@ module axi_gran_burst_splitter_counters #(
   end
   assign cnt_inp = {1'b0, alloc_pld_out.len} + 1;
 
-  lzc #(
-    .WIDTH  ( MaxTxns ),
-    .MODE   ( 1'b0    )  // start counting at index 0
+  cc_lzc #(
+    .Width ( MaxTxns ),
+    .Mode  ( cc_pkg::LZC_TRAILING_ZERO_CNT )  // start counting at index 0
   ) i_lzc (
     .in_i    ( cnt_free     ),
     .cnt_o   ( cnt_free_idx ),
@@ -104,14 +105,15 @@ module axi_gran_burst_splitter_counters #(
 
   logic idq_inp_req, idq_inp_gnt,
         idq_oup_gnt, idq_oup_valid, idq_oup_pop;
-  id_queue #(
-    .ID_WIDTH ( $bits(id_t) ),
-    .CAPACITY ( MaxTxns     ),
-    .FULL_BW  ( 1'b1        ),
+  cc_id_queue #(
+    .IdWidth  ( $bits(id_t) ),
+    .Capacity ( MaxTxns     ),
+    .FullBw   ( 1'b1        ),
     .data_t   ( cnt_idx_t   )
   ) i_idq (
     .clk_i,
     .rst_ni,
+    .clr_i            ( 1'b0             ),
     .inp_id_i         ( alloc_pld_out.id ),
     .inp_data_i       ( cnt_free_idx  ),
     .inp_req_i        ( idq_inp_req   ),
@@ -126,7 +128,9 @@ module axi_gran_burst_splitter_counters #(
     .oup_req_i        ( cnt_req_i     ),
     .oup_data_o       ( cnt_r_idx     ),
     .oup_data_valid_o ( idq_oup_valid ),
-    .oup_gnt_o        ( idq_oup_gnt   )
+    .oup_gnt_o        ( idq_oup_gnt   ),
+    .full_o           (/* keep open */),
+    .empty_o          (/* keep open */)
   );
   assign idq_inp_req = alloc_req   & alloc_gnt;
   assign alloc_gnt   = idq_inp_gnt & |(cnt_free);
@@ -157,7 +161,7 @@ module axi_gran_burst_splitter_counters #(
   end
 
   // registers
-  `FFARN(err_q, err_d, '0, clk_i, rst_ni)
+  `FF(err_q, err_d, '0, clk_i, rst_ni)
 
   `ifndef VERILATOR
   // pragma translate_off

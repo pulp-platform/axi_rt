@@ -31,8 +31,8 @@ module axi_rt_unit #(
   parameter type         axi_req_t          = logic,
   parameter type         axi_resp_t         = logic,
   // dependent
-  parameter int unsigned IdxWWidth          = cf_math_pkg::idx_width(WBufferDepth),
-  parameter int unsigned IdxAwWidth         = cf_math_pkg::idx_width(NumPending),
+  parameter int unsigned IdxWWidth          = cc_pkg::idx_width(WBufferDepth),
+  parameter int unsigned IdxAwWidth         = cc_pkg::idx_width(NumPending),
   parameter type         addr_t             = logic [AddrWidth-1:0],
   parameter type         idx_w_t            = logic [IdxWWidth-1:0],
   parameter type         idx_aw_t           = logic [IdxAwWidth-1:0],
@@ -88,7 +88,7 @@ module axi_rt_unit #(
   localparam int unsigned NumBytesWidth  =  axi_pkg::LenWidth + axi_pkg::SizeWidth + 32'd1;
 
   /// index with of the regions
-  parameter int unsigned NumRegionWidth  = cf_math_pkg::idx_width(NumAddrRegions);
+  parameter int unsigned NumRegionWidth  = cc_pkg::idx_width(NumAddrRegions);
 
   /// maximum amount of bytes in a transfer type
   typedef logic[NumBytesWidth-1:0]  ax_bytes_t;
@@ -187,8 +187,8 @@ module axi_rt_unit #(
   assign rt_bypassed_o = rt_bypassed_q;
 
   // state
-  `FFARN(rt_state_q,    rt_state_d,    IDLE, clk_i, rst_ni)
-  `FFARN(rt_bypassed_q, rt_bypassed_d, 1'b1, clk_i, rst_ni)
+  `FF(rt_state_q,    rt_state_d,    IDLE, clk_i, rst_ni)
+  `FF(rt_bypassed_q, rt_bypassed_d, 1'b1, clk_i, rst_ni)
 
 
   // --------------------------------------------------
@@ -287,7 +287,7 @@ module axi_rt_unit #(
   // --------------------------------------------------
   logic w_decode_error, r_decode_error;
 
-  addr_decode_dync #(
+  cc_addr_decode_dync #(
     .NoIndices ( NumAddrRegions ),
     .NoRules   ( NumRules       ),
     .addr_t    ( addr_t         ),
@@ -304,7 +304,7 @@ module axi_rt_unit #(
     .config_ongoing_i ( byp_isolate | !rt_enable_i )
   );
 
-  addr_decode_dync #(
+  cc_addr_decode_dync #(
     .NoIndices ( NumAddrRegions ),
     .NoRules   ( NumRules       ),
     .addr_t    ( addr_t         ),
@@ -324,8 +324,8 @@ module axi_rt_unit #(
   if (CutDecErrors) begin : gen_decode_error_cuts
     // instantiate a register
     logic w_decode_error_q, r_decode_error_q;
-    `FFARN(w_decode_error_q, w_decode_error, '0, clk_i, rst_ni)
-    `FFARN(r_decode_error_q, r_decode_error, '0, clk_i, rst_ni)
+    `FF(w_decode_error_q, w_decode_error, '0, clk_i, rst_ni)
+    `FF(r_decode_error_q, r_decode_error, '0, clk_i, rst_ni)
     // connect outputs
     assign w_decode_error_o = w_decode_error_q;
     assign r_decode_error_o = r_decode_error_q;

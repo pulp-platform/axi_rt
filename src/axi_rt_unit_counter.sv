@@ -34,13 +34,13 @@ module ax_rt_unit_counter #(
 
   localparam period_t static_delta_one = 'd1;
 
-  delta_counter #(
-    .WIDTH           ( PeriodWidth ),
-    .STICKY_OVERFLOW ( 1'b0        )
+  cc_delta_counter #(
+    .Width          ( PeriodWidth ),
+    .StickyOverflow ( 1'b0        )
   ) i_delta_counter_period (
     .clk_i,
     .rst_ni,
-    .clear_i   ( 1'b0                ),
+    .clr_i     ( 1'b0                ),
     .en_i      ( enable_i            ),
     .load_i    ( period_load         ),
     .down_i    ( 1'b1                ),
@@ -64,13 +64,13 @@ module ax_rt_unit_counter #(
   logic    budget_en;
   logic    budget_overflow;
 
-  delta_counter #(
-    .WIDTH           ( BudgetWidth ),
-    .STICKY_OVERFLOW ( 1'b0        )
+  cc_delta_counter #(
+    .Width          ( BudgetWidth ),
+    .StickyOverflow ( 1'b0        )
   ) i_delta_counter_budget (
     .clk_i,
     .rst_ni,
-    .clear_i   ( 1'b0            ),
+    .clr_i     ( 1'b0            ),
     .en_i      ( budget_en       ),
     .load_i    ( period_over     ),
     .down_i    ( 1'b1            ),

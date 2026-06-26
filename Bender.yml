@@ -11,9 +11,9 @@ export_include_dirs:
   - include
 
 dependencies:
-  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.32.0 }
-  axi:                { git: "https://github.com/pulp-platform/axi.git",                version: 0.39.1 }
-  register_interface: { git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.2  }
+  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git",       version: 2.0.0-beta }
+  axi:                { git: "https://github.com/pulp-platform/axi.git",                rev: rt/common-cells-v2 }
+  register_interface: { git: "https://github.com/pulp-platform/register_interface.git", rev: common-cells-v2 }
 
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this

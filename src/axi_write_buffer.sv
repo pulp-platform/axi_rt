@@ -10,8 +10,8 @@
 module axi_write_buffer #(
   parameter int unsigned NumOutstanding = 32'd0,
   parameter int unsigned WBufferDepth   = 32'd0,
-  parameter int unsigned IdxWWidth      = cf_math_pkg::idx_width(WBufferDepth),
-  parameter int unsigned IdxAwWidth     = cf_math_pkg::idx_width(NumOutstanding),
+  parameter int unsigned IdxWWidth      = cc_pkg::idx_width(WBufferDepth),
+  parameter int unsigned IdxAwWidth     = cc_pkg::idx_width(NumOutstanding),
   parameter type         aw_chan_t      = logic,
   parameter type         w_chan_t       = logic,
   parameter type         axi_req_t      = logic,
@@ -51,6 +51,13 @@ module axi_write_buffer #(
   // counter for amount of lasts in queue
   idx_w_t  num_lasts_d, num_lasts_q;
 
+  // `cc_stream_fifo` reports usage on `cc_pkg::cnt_width(Depth)` bits; keep the legacy
+  // `idx_width(Depth)`-wide status outputs by slicing the low bits.
+  logic [cc_pkg::cnt_width(NumOutstanding)-1:0] num_aw_stored_cnt;
+  logic [cc_pkg::cnt_width(WBufferDepth)-1:0]   num_w_stored_cnt;
+  assign num_aw_stored_o = num_aw_stored_cnt[IdxAwWidth-1:0];
+  assign num_w_stored_o  = num_w_stored_cnt[IdxWWidth-1:0];
+
 
   // --------------------------------------------------
   // Bypass
@@ -73,15 +80,15 @@ module axi_write_buffer #(
   // handle AW channel
   // --------------------------------------------------
   // buffer AW
-  stream_fifo #(
-    .DEPTH      ( NumOutstanding ),
-    .T          ( aw_chan_t      )
+  cc_stream_fifo #(
+    .Depth  ( NumOutstanding ),
+    .data_t ( aw_chan_t      )
   ) i_stream_fifo_aw (
     .clk_i,
     .rst_ni,
+    .clr_i      ( 1'b0                ),
     .flush_i    ( 1'b0                ),
-    .testmode_i ( 1'b0                ),
-    .usage_o    ( num_aw_stored_o     ),
+    .usage_o    ( num_aw_stored_cnt   ),
     .data_i     ( slv_req_i.aw        ),
     .valid_i    ( slv_req_i.aw_valid  ),
     .ready_o    ( slv_resp_o.aw_ready ),
@@ -92,8 +99,8 @@ module axi_write_buffer #(
 
 
   // use a stream join to ensure handshaking is correct
-  stream_join #(
-    .N_INP       ( 32'd2  )
+  cc_stream_join #(
+    .NumInp ( 32'd2  )
   ) i_stream_join_aw (
     .inp_valid_i ( {mgmt_valid_aw, egress_aw_valid} ),
     .inp_ready_o ( {mgmt_ready_aw, egress_aw_ready} ),
@@ -105,14 +112,14 @@ module axi_write_buffer #(
   // --------------------------------------------------
   // handle W channel last queue
   // --------------------------------------------------
-  stream_fifo #(
-    .DEPTH ( NumOutstanding ),
-    .T     ( logic          )
+  cc_stream_fifo #(
+    .Depth  ( NumOutstanding ),
+    .data_t ( logic          )
   ) i_stream_fifo (
     .clk_i,
     .rst_ni,
+    .clr_i      ( 1'b0               ),
     .flush_i    ( 1'b0               ),
-    .testmode_i ( 1'b0               ),
     .usage_o    ( /* Not Used */     ),
     .data_i     ( 1'b0               ),
     .valid_i    ( ingress_w_last     ),
@@ -127,16 +134,15 @@ module axi_write_buffer #(
   // handle W channel
   // --------------------------------------------------
   // buffer W
-  stream_fifo #(
-    .DEPTH      ( WBufferDepth ),
-    .T          ( w_chan_t     ),
-    .ADDR_DEPTH ( IdxWWidth    )
+  cc_stream_fifo #(
+    .Depth  ( WBufferDepth ),
+    .data_t ( w_chan_t     )
   ) i_stream_fifo_w (
     .clk_i,
     .rst_ni,
+    .clr_i      ( 1'b0               ),
     .flush_i    ( 1'b0               ),
-    .testmode_i ( 1'b0               ),
-    .usage_o    ( num_w_stored_o     ),
+    .usage_o    ( num_w_stored_cnt   ),
     .data_i     ( slv_req_i.w        ),
     .valid_i    ( slv_req_i.w_valid  ),
     .ready_o    ( slv_resp_o.w_ready ),
@@ -167,8 +173,8 @@ module axi_write_buffer #(
   assign mgmt_valid_w = num_lasts_q > 0;
 
   // use a stream join to ensure handshaking is correct
-  stream_join #(
-    .N_INP       ( 32'd2  )
+  cc_stream_join #(
+    .NumInp ( 32'd2  )
   ) i_stream_join_w (
     .inp_valid_i ( {mgmt_valid_w, egress_w_valid} ),
     .inp_ready_o ( {mgmt_ready_w, egress_w_ready} ),
@@ -180,6 +186,6 @@ module axi_write_buffer #(
   // --------------------------------------------------
   // state
   // --------------------------------------------------
-  `FFARN(num_lasts_q, num_lasts_d, '0, clk_i, rst_ni)
+  `FF(num_lasts_q, num_lasts_d, '0, clk_i, rst_ni)
 
 endmodule

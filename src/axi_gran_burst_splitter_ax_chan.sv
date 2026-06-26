@@ -156,7 +156,7 @@ module axi_gran_burst_splitter_ax_chan #(
   end
 
   // registers
-  `FFARN(ax_q, ax_d, '0, clk_i, rst_ni)
-  `FFARN(state_q, state_d, Idle, clk_i, rst_ni)
-  `FFARN(num_beats_q, num_beats_d, 9'h000, clk_i, rst_ni)
+  `FF(ax_q, ax_d, '0, clk_i, rst_ni)
+  `FF(state_q, state_d, Idle, clk_i, rst_ni)
+  `FF(num_beats_q, num_beats_d, 9'h000, clk_i, rst_ni)
 endmodule
