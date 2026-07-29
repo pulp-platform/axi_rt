@@ -136,6 +136,6 @@ module axi_rt_regbus_guard #(
   end
 
   // state
-  `FFARN(state_q, state_d, '0, clk_i, rst_ni)
+  `FF(state_q, state_d, '0, clk_i, rst_ni)
 
 endmodule

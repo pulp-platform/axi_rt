@@ -88,7 +88,6 @@ module axi_gran_burst_splitter #(
   ) i_demux_supported_vs_unsupported (
     .clk_i,
     .rst_ni,
-    .test_i           ( 1'b0                          ),
     .slv_req_i        ( slv_req ),
     .slv_aw_select_i  ( sel_aw_unsupported            ),
     .slv_ar_select_i  ( sel_ar_unsupported            ),
@@ -144,7 +143,6 @@ module axi_gran_burst_splitter #(
   ) i_err_slv (
     .clk_i,
     .rst_ni,
-    .test_i     ( 1'b0              ),
     .slv_req_i  ( unsupported_req   ),
     .slv_resp_o ( unsupported_resp  )
   );
@@ -380,12 +378,12 @@ module axi_gran_burst_splitter #(
   // --------------------------------------------------
   // Flip-Flops
   // --------------------------------------------------
-  `FFARN(b_err_q, b_err_d, 1'b0, clk_i, rst_ni)
-  `FFARN(b_state_q, b_state_d, BReady, clk_i, rst_ni)
-  `FFARN(r_last_q, r_last_d, 1'b0, clk_i, rst_ni)
-  `FFARN(r_state_q, r_state_d, RFeedthrough, clk_i, rst_ni)
-  `FFARN(w_len_q, w_len_d, 8'h00, clk_i, rst_ni)
-  `FFARN(w_len_vld_q, w_len_vld_d, 1'b0, clk_i, rst_ni)
+  `FF(b_err_q, b_err_d, 1'b0, clk_i, rst_ni)
+  `FF(b_state_q, b_state_d, BReady, clk_i, rst_ni)
+  `FF(r_last_q, r_last_d, 1'b0, clk_i, rst_ni)
+  `FF(r_state_q, r_state_d, RFeedthrough, clk_i, rst_ni)
+  `FF(w_len_q, w_len_d, 8'h00, clk_i, rst_ni)
+  `FF(w_len_vld_q, w_len_vld_d, 1'b0, clk_i, rst_ni)
 
   // --------------------------------------------------
   // Assumptions and assertions

@@ -41,13 +41,13 @@ module tb_axi_rt_unit_top #(
   // Calc slave id
   localparam int unsigned TbAxiSlvIdWidth = (TbNumMasters == 32'd1 & TbNumSlaves == 32'd1) ?
                                              TbAxiIdWidth :
-                                             TbAxiIdWidth + cf_math_pkg::idx_width(TbNumMasters);
+                                             TbAxiIdWidth + cc_pkg::idx_width(TbNumMasters);
 
   // RT unit parameters
   localparam int unsigned TbPeriodWidth = 32'd32;
   localparam int unsigned TbBudgetWidth = 32'd32;
-  localparam int unsigned TbIdxWWidth   = cf_math_pkg::idx_width(TbWBufferDepth);
-  localparam int unsigned TbIdxAwWidth  = cf_math_pkg::idx_width(TbNumPending);
+  localparam int unsigned TbIdxWWidth   = cc_pkg::idx_width(TbWBufferDepth);
+  localparam int unsigned TbIdxAwWidth  = cc_pkg::idx_width(TbNumPending);
   localparam type         idx_w_t       = logic [TbIdxWWidth-1:0];
   localparam type         idx_aw_t      = logic [TbIdxAwWidth-1:0];
   localparam type         period_t      = logic [TbPeriodWidth-1:0];

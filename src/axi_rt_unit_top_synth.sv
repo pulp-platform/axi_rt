@@ -28,8 +28,8 @@ module axi_rt_unit_top_synth #(
   parameter bit          CutDecErrors     =  1'b0,
   parameter bit          CutSplitterPaths =  1'b0,
   // derived
-  parameter int unsigned IdxWWidth      = cf_math_pkg::idx_width(WBufferDepth),
-  parameter int unsigned IdxAwWidth     = cf_math_pkg::idx_width(NumPending),
+  parameter int unsigned IdxWWidth      = cc_pkg::idx_width(WBufferDepth),
+  parameter int unsigned IdxAwWidth     = cc_pkg::idx_width(NumPending),
   // derived types
   parameter type idx_w_t                = logic    [IdxWWidth-1     :0],
   parameter type idx_aw_t               = logic    [IdxAwWidth-1    :0],
