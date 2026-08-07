@@ -16,11 +16,17 @@ We are happy to accept pull requests and issues from any contributors. See [`CON
 for additional information.
 
 ## Getting Started
+Create and activate a Python virtual environment, and then install the required packages:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 The IP can be reconfigured using the `axirt.mk` make fragment. The provided makefile gives
 a reference on how to invoke the fragment.
 
 ``` bash
 make axirt_regs
-
 ```

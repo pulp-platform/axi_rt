@@ -11,5 +11,9 @@ target/xilinx/axirt_ip*
 target/xilinx/scripts/compile.axirt.xilinx.tcl
 target/xilinx/vivado.*
 
+# python
+.venv/
+__pycache__/
+
 # scripts
 scripts/compile.vsim.tcl
