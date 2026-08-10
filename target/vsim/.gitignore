@@ -1,0 +1,6 @@
+stimuli/
+run/
+*.wlf
+.nfs*
+*.vstf
+wlf*

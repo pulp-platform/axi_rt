@@ -49,4 +49,4 @@ sources:
   - target: test
     files:
       # Level 0
-      - test/tb_axi_rt_unit_top.sv
+      - target/vsim/src/tb_axi_rt_unit_top.sv
