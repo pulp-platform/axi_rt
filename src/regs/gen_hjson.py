@@ -78,7 +78,7 @@ REG_STR = '''
     {{ multireg:
       {{ name:     "rt_enable"
         desc:     "Enable RT feature on master"
-        swaccess: "wo"
+        swaccess: "rw"
         hwaccess: "hro"
         count:    "NumMrg"
         cname:    "rt_enable"
@@ -107,7 +107,7 @@ REG_STR = '''
     {{ multireg:
       {{ name:     "len_limit"
         desc:     "Fragmentation of the bursts in beats."
-        swaccess: "wo"
+        swaccess: "rw"
         hwaccess: "hro"
         count:    "NumMrg"
         cname:    "len_limit"

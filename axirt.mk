@@ -16,8 +16,8 @@ PYTHON3    ?= python3
 REGTOOL    ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
 
 # Default config
-AXIRT_NUM_MGRS ?= 8
-AXIRT_NUM_SUBS ?= 2
+AXIRT_NUM_MGRS ?= 1
+AXIRT_NUM_SUBS ?= 16
 
 AXIRTXILROOT  = $(AXIRTROOT)/target/xilinx
 
