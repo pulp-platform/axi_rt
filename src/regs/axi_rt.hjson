@@ -22,12 +22,12 @@
     { name: "NumMrg",
       desc: "Maximum number of managers.",
       type: "int",
-      default: "8"
+      default: "1"
     },
     { name: "NumSub",
       desc: "Configured number of subordinate regions.",
       type: "int",
-      default: "2"
+      default: "16"
     }
     { name: "NumReg",
       desc: "Configured number of required registers.",
@@ -68,7 +68,7 @@
     { multireg:
       { name:     "rt_enable"
         desc:     "Enable RT feature on master"
-        swaccess: "wo"
+        swaccess: "rw"
         hwaccess: "hro"
         count:    "NumMrg"
         cname:    "rt_enable"
@@ -97,7 +97,7 @@
     { multireg:
       { name:     "len_limit"
         desc:     "Fragmentation of the bursts in beats."
-        swaccess: "wo"
+        swaccess: "rw"
         hwaccess: "hro"
         count:    "NumMrg"
         cname:    "len_limit"
@@ -455,7 +455,7 @@
     { name:     "max_num_managers"
       desc:     "Value of the max_num_managers parameter."
       swaccess: "ro"
-      resval:   "8"
+      resval:   "1"
       fields: [
         { bits: "31:0", name: "max_num_managers", desc: "Value of the max_num_managers parameter." }
       ]
