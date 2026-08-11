@@ -19,9 +19,12 @@ module axi_rt_unit #(
   parameter int unsigned NumRules           = 32'd0,
   parameter int unsigned PeriodWidth        = 32'd0,
   parameter int unsigned BudgetWidth        = 32'd0,
+  parameter int unsigned AxiSizeWidth       = 32'd0,
   parameter bit          CutSplitterPaths   =  1'b0,
   parameter bit          DisableSplitChecks =  1'b0,
   parameter bit          CutDecErrors       =  1'b0,
+  parameter bit          UseWriteBuffer     =  1'b0,
+  parameter bit          UseSplitterReconf  =  1'b0,
   parameter type         rt_rule_t          = logic,
   parameter type         aw_chan_t          = logic,
   parameter type         w_chan_t           = logic,
@@ -85,7 +88,7 @@ module axi_rt_unit #(
 
 
   /// the maximum amount of bytes one AXI transfer can have
-  localparam int unsigned NumBytesWidth  =  axi_pkg::LenWidth + axi_pkg::SizeWidth + 32'd1;
+  localparam int unsigned NumBytesWidth  =  axi_pkg::LenWidth + AxiSizeWidth + 32'd1;
 
   /// index with of the regions
   parameter int unsigned NumRegionWidth  = cf_math_pkg::idx_width(NumAddrRegions);
@@ -97,8 +100,8 @@ module axi_rt_unit #(
   typedef logic[NumRegionWidth-1:0] region_idx_t;
 
   // internal buses
-  axi_req_t  iso_req,  cut_req,  fwd_req,  out_req,  mux_req;
-  axi_resp_t iso_resp, cut_resp, fwd_resp, out_resp, mux_resp;
+  axi_req_t  iso_req,  iso_reconf_req,  cut_req,  fwd_req,  out_req,  mux_req;
+  axi_resp_t iso_resp, iso_reconf_resp, cut_resp, fwd_resp, out_resp, mux_resp;
 
   // number of bytes transferred via one ax
   ax_bytes_t aw_bytes;
@@ -115,6 +118,9 @@ module axi_rt_unit #(
   // every address region and r/w has a counter and an isolate signal
   logic [NumAddrRegions-1:0] r_isolate;
   logic [NumAddrRegions-1:0] w_isolate;
+
+  // merge isolate signals
+  logic isolate_i_merge;
 
   // global isolate
   logic global_isolate;
@@ -140,6 +146,8 @@ module axi_rt_unit #(
   logic isolated;
   logic tail_isolated;
 
+  // runtime fragmentation: length applied to the burst splitter
+  axi_pkg::len_t fragm_len;
 
   // --------------------------------------------------
   // Bypass FSM
@@ -192,8 +200,10 @@ module axi_rt_unit #(
 
 
   // --------------------------------------------------
-  // Isolation
+  // IMTU Isolation
   // --------------------------------------------------
+  // Isolate upstream burst transactions when IMTU credits expire.
+
   axi_isolate #(
     .NumPending           ( NumPending   ),
     .TerminateTransaction ( 1'b0         ),
@@ -209,23 +219,100 @@ module axi_rt_unit #(
     .rst_ni,
     .slv_req_i,
     .slv_resp_o,
-    .mst_req_o  ( iso_req                      ),
-    .mst_resp_i ( iso_resp                     ),
-    .isolate_i  ( global_isolate | byp_isolate ),
-    .isolated_o ( isolated                     )
+    .mst_req_o  ( iso_req         ),
+    .mst_resp_i ( iso_resp        ),
+    .isolate_i  ( isolate_i_merge ),
+    .isolated_o ( isolated        )
   );
 
   // global isolate
-  assign global_isolate = ((|r_isolate) | (|w_isolate)) & imtu_enable_i;
-  assign isolate_o      = global_isolate;
+  assign isolate_i_merge = global_isolate | byp_isolate;
+  assign global_isolate  = ((|r_isolate) | (|w_isolate)) & imtu_enable_i;
+  assign isolate_o       = global_isolate;
 
+  // --------------------------------------------------
+  // Runtime Reconfiguration
+  // --------------------------------------------------
+  // Isolate upstream burst transactions to safely reconfigure the burst splitter when a new fragment length value is received.
+
+  if (UseSplitterReconf) begin : gen_splitter_reconf
+    
+    // reconfiguration signals
+    axi_pkg::len_t fragm_len_new;
+    logic fragm_len_store, fragm_len_wait_in_flight, fragm_len_update, fragm_len_release;
+
+    axi_isolate #(
+      .NumPending           ( NumPending   ),
+      .TerminateTransaction ( 1'b0         ),
+      .AtopSupport          ( 1'b1         ),
+      .AxiAddrWidth         ( AddrWidth    ),
+      .AxiDataWidth         ( DataWidth    ),
+      .AxiIdWidth           ( IdWidth      ),
+      .AxiUserWidth         ( UserWidth    ),
+      .axi_req_t            ( axi_req_t    ),
+      .axi_resp_t           ( axi_resp_t   )
+    ) i_axi_isolate_reconf_burst_splitter (
+      .clk_i,
+      .rst_ni,
+      .slv_req_i  ( mux_req                  ),
+      .slv_resp_o ( mux_resp                 ),
+      .mst_req_o  ( iso_reconf_req           ),
+      .mst_resp_i ( iso_reconf_resp          ),
+      .isolate_i  ( fragm_len_wait_in_flight ),
+      .isolated_o ( fragm_len_update         )
+    );
+
+    // Store new fragment length, then isolate channel to reliably update its value.
+    always_ff @(posedge clk_i, negedge rst_ni) begin: store_fragm_len
+      if (!rst_ni) begin
+        fragm_len_new <= '0;
+        fragm_len_wait_in_flight <= 1'b0;
+      end else if (fragm_len_store) begin
+        fragm_len_new <= len_limit_i;
+        fragm_len_wait_in_flight <= 1'b1;
+      end else if (fragm_len_release) begin
+        fragm_len_new <= fragm_len_new;
+        fragm_len_wait_in_flight <= 1'b0;
+      end
+    end
+
+    assign fragm_len_store = (fragm_len_new != len_limit_i);
+
+    // Apply new fragment length as soon as channel is isolated.
+    always_ff @(posedge clk_i, negedge rst_ni) begin: update_fragm_len
+      if (!rst_ni) begin
+        fragm_len <= '0;
+      end else if (fragm_len_update) begin
+        fragm_len <= fragm_len_new;
+      end
+    end
+
+    // Release fragment length after it has been applied.
+    always_ff @(posedge clk_i, negedge rst_ni) begin: release_fragm_len
+      if (!rst_ni) begin
+        fragm_len_release <= 1'b0;
+      end else if ((fragm_len == fragm_len_new) && fragm_len_update) begin
+        fragm_len_release <= 1'b1;
+      end else begin
+        fragm_len_release <= 1'b0;
+      end
+    end
+
+  end else begin : gen_no_splitter_reconf
+    // Bypass the isolation stage.
+    assign iso_reconf_req = mux_req;
+    assign mux_resp       = iso_reconf_resp;
+    assign fragm_len      = len_limit_i;
+  end
 
   // --------------------------------------------------
   // Cut Transactions
   // --------------------------------------------------
-  axi_gran_burst_splitter #(
+
+  axi_burst_splitter_gran #(
     .MaxReadTxns   ( NumPending         ),
     .MaxWriteTxns  ( NumPending         ),
+    .FullBW        ( 1'b1               ),
     .AddrWidth     ( AddrWidth          ),
     .DataWidth     ( DataWidth          ),
     .IdWidth       ( IdWidth            ),
@@ -239,37 +326,41 @@ module axi_rt_unit #(
     .axi_b_chan_t  ( b_chan_t           ),
     .axi_ar_chan_t ( ar_chan_t          ),
     .axi_r_chan_t  ( r_chan_t           )
-  ) i_axi_gran_burst_splitter (
+  ) i_axi_burst_splitter_gran (
     .clk_i,
     .rst_ni,
-    .len_limit_i,
-    .slv_req_i    ( mux_req  ),
-    .slv_resp_o   ( mux_resp ),
-    .mst_req_o    ( cut_req  ),
-    .mst_resp_i   ( cut_resp )
+    .len_limit_i  ( fragm_len       ),
+    .slv_req_i    ( iso_reconf_req  ),
+    .slv_resp_o   ( iso_reconf_resp ),
+    .mst_req_o    ( cut_req         ),
+    .mst_resp_i   ( cut_resp        )
   );
-
 
   // --------------------------------------------------
   // Buffer Transactions
   // --------------------------------------------------
-  axi_write_buffer #(
-    .NumOutstanding ( NumPending   ),
-    .WBufferDepth   ( WBufferDepth ),
-    .aw_chan_t      ( aw_chan_t    ),
-    .w_chan_t       ( w_chan_t     ),
-    .axi_req_t      ( axi_req_t    ),
-    .axi_resp_t     ( axi_resp_t   )
-  ) i_axi_write_buffer (
-    .clk_i,
-    .rst_ni,
-    .slv_req_i       ( cut_req          ),
-    .slv_resp_o      ( cut_resp         ),
-    .mst_req_o       ( fwd_req          ),
-    .mst_resp_i      ( fwd_resp         ),
-    .num_w_stored_o  ( num_w_pending_o  ),
-    .num_aw_stored_o ( num_aw_pending_o )
-  );
+  if (UseWriteBuffer) begin: gen_w_buffer
+    axi_write_buffer #(
+      .NumOutstanding ( NumPending   ),
+      .WBufferDepth   ( WBufferDepth ),
+      .aw_chan_t      ( aw_chan_t    ),
+      .w_chan_t       ( w_chan_t     ),
+      .axi_req_t      ( axi_req_t    ),
+      .axi_resp_t     ( axi_resp_t   )
+    ) i_axi_write_buffer (
+      .clk_i,
+      .rst_ni,
+      .slv_req_i       ( cut_req          ),
+      .slv_resp_o      ( cut_resp         ),
+      .mst_req_o       ( fwd_req          ),
+      .mst_resp_i      ( fwd_resp         ),
+      .num_w_stored_o  ( num_w_pending_o  ),
+      .num_aw_stored_o ( num_aw_pending_o )
+    );
+  end else begin : gen_no_w_buffer
+    assign fwd_req       = cut_req;
+    assign cut_resp      = fwd_resp;
+  end
 
 
   // --------------------------------------------------

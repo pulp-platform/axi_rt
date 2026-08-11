@@ -6,7 +6,7 @@
 # - Thomas Benz <tbenz@iis.ee.ethz.ch>
 
 BENDER    ?= bender
-AXIRTROOT ?= .
+AXIRTROOT ?= $(CURDIR)
 
 include axirt.mk
 

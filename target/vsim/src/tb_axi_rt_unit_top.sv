@@ -288,38 +288,41 @@ module tb_axi_rt_unit_top #(
   // DUT
   //-----------------------------------
   axi_rt_unit_top #(
-    .NumManagers      ( TbNumMasters     ),
-    .AddrWidth        ( TbAxiAddrWidth   ),
-    .DataWidth        ( TbAxiDataWidth   ),
-    .IdWidth          ( TbAxiIdWidth     ),
-    .UserWidth        ( TbAxiUserWidth   ),
-    .NumPending       ( TbNumPending     ),
-    .WBufferDepth     ( TbWBufferDepth   ),
-    .NumAddrRegions   ( TbNumRegions     ),
-    .BudgetWidth      ( TbBudgetWidth    ),
-    .PeriodWidth      ( TbPeriodWidth    ),
-    .RegIdWidth       ( TbAxiSlvIdWidth  ),
-    .CutDecErrors     ( 1'b1             ),
-    .CutSplitterPaths ( 1'b1             ),
-    .aw_chan_t        ( axi_aw_chan_t    ),
-    .ar_chan_t        ( axi_ar_chan_t    ),
-    .w_chan_t         ( axi_w_chan_t     ),
-    .r_chan_t         ( axi_r_chan_t     ),
-    .b_chan_t         ( axi_b_chan_t     ),
-    .axi_req_t        ( axi_req_t        ),
-    .axi_resp_t       ( axi_resp_t       ),
-    .req_req_t        ( cfg_req_t        ),
-    .req_rsp_t        ( cfg_rsp_t        )
+    .NumManagers       ( TbNumMasters       ),
+    .AddrWidth         ( TbAxiAddrWidth     ),
+    .DataWidth         ( TbAxiDataWidth     ),
+    .IdWidth           ( TbAxiIdWidth       ),
+    .UserWidth         ( TbAxiUserWidth     ),
+    .NumPending        ( TbNumPending       ),
+    .WBufferDepth      ( TbWBufferDepth     ),
+    .NumAddrRegions    ( TbNumRegions       ),
+    .BudgetWidth       ( TbBudgetWidth      ),
+    .PeriodWidth       ( TbPeriodWidth      ),
+    .RegIdWidth        ( TbAxiSlvIdWidth    ),
+    .AxiSizeWidth      ( axi_pkg::SizeWidth ),
+    .CutDecErrors      ( 1'b1               ),
+    .CutSplitterPaths  ( 1'b1               ),
+    .UseWriteBuffer    ( 1'b1               ),
+    .UseSplitterReconf ( 1'b1               ),
+    .aw_chan_t         ( axi_aw_chan_t      ),
+    .ar_chan_t         ( axi_ar_chan_t      ),
+    .w_chan_t          ( axi_w_chan_t       ),
+    .r_chan_t          ( axi_r_chan_t       ),
+    .b_chan_t          ( axi_b_chan_t       ),
+    .axi_req_t         ( axi_req_t          ),
+    .axi_resp_t        ( axi_resp_t         ),
+    .req_req_t         ( cfg_req_t          ),
+    .req_rsp_t         ( cfg_rsp_t          )
   ) i_axi_rt_unit (
-    .clk_i            ( clk        ),
-    .rst_ni           ( rst_n      ),
-    .slv_req_i        ( master_req ),
-    .slv_resp_o       ( master_rsp ),
-    .mst_req_o        ( rt_req     ),
-    .mst_resp_i       ( rt_rsp     ),
-    .reg_req_i        ( cfg_req    ),
-    .reg_rsp_o        ( cfg_rsp    ),
-    .reg_id_i         ( reg_id     )
+    .clk_i             ( clk        ),
+    .rst_ni            ( rst_n      ),
+    .slv_req_i         ( master_req ),
+    .slv_resp_o        ( master_rsp ),
+    .mst_req_o         ( rt_req     ),
+    .mst_resp_i        ( rt_rsp     ),
+    .reg_req_i         ( cfg_req    ),
+    .reg_rsp_o         ( cfg_rsp    ),
+    .reg_id_i          ( reg_id     )
   );
 
 
@@ -372,8 +375,10 @@ module tb_axi_rt_unit_top #(
   for (genvar i = 0; i < TbNumMasters; i++) begin : gen_master_drivers
     initial begin : proc_axi_master
       automatic axi_file_master_t axi_file_master = new(master_dv[i]);
+      automatic string stim_dir = "target/vsim/stimuli";
+      void'($value$plusargs("STIM_DIR=%s", stim_dir));
       axi_file_master.reset();
-      axi_file_master.load_files($sformatf("test/stimuli/axi_rt_unit_%04h.reads.txt", i), $sformatf("test/stimuli/axi_rt_unit_%04h.writes.txt", i));
+      axi_file_master.load_files($sformatf("%s/axi_rt_unit_%04h.reads.txt", stim_dir, i), $sformatf("%s/axi_rt_unit_%04h.writes.txt", stim_dir, i));
 
       // tb metrics
       total_num_reads [i] = axi_file_master.num_reads;

@@ -1,15 +1,5 @@
 .bender
-transcript
-*.wlf
-work/
-modelsim.ini
-.nfs*
-*.vstf
-wlf*
-*.yml
-target/xilinx/axirt_ip*
-target/xilinx/scripts/compile.axirt.xilinx.tcl
-target/xilinx/vivado.*
 
-# scripts
-scripts/compile.vsim.tcl
+# python
+.venv/
+__pycache__/

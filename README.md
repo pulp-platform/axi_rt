@@ -16,11 +16,38 @@ We are happy to accept pull requests and issues from any contributors. See [`CON
 for additional information.
 
 ## Getting Started
+Create and activate a Python virtual environment, and then install the required packages:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 The IP can be reconfigured using the `axirt.mk` make fragment. The provided makefile gives
 a reference on how to invoke the fragment.
 
 ``` bash
 make axirt_regs
+```
 
+## Simulation
+A standalone QuestaSim testbench for the AXI-RT unit (`tb_axi_rt_unit_top`) is provided.
+
+Generate the test stimuli and the golden model:
+
+``` bash
+make axirt-vsim-gen-stimuli STIM_NUM_MASTERS=4 STIM_NUM_TX=8 STIM_MIN_LEN=4 STIM_MAX_LEN=15 STIM_SEED=1
+```
+
+Build the design and run the simulation in batch mode:
+
+``` bash
+make axirt-vsim-clean axirt-vsim-compile axirt-vsim-run-batch
+```
+
+Build the design and run the simulation in GUI mode:
+
+``` bash
+make axirt-vsim-clean axirt-vsim-compile axirt-vsim-run
 ```

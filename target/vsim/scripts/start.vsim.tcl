@@ -5,6 +5,16 @@
 #
 # Authors:
 # - Thomas Benz <tbenz@iis.ee.ethz.ch>
+# - Gianluca Bellocchi <gianluca.bellocchi@unimore.it>
 
-vsim -voptargs=+acc -t 1ps tb_axi_rt_unit_top
+# Record signals.
 log -r /*
+
+# Add design hierarchy to the Wave window.
+add wave -r /*
+
+# Run simulation.
+run -all
+
+# Fit the entire run in the Wave window.
+wave zoom full
