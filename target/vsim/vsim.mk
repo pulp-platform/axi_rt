@@ -9,6 +9,9 @@ AXIRTVSIMROOT ?= .
 PYTHON  	  ?= python3
 BENDER   	  ?= bender
 
+BENDER_YML  ?= $(AXIRTVSIMROOT)/../../Bender.yml
+BENDER_LOCK ?= $(AXIRTVSIMROOT)/../../Bender.lock
+
 # QuestaSim options
 QUESTA_SEPP  ?=
 VSIM 		 ?= $(QUESTA_SEPP) vsim
@@ -57,9 +60,11 @@ axirt-vsim-gen-stimuli:
 		$(PYTHON) $(AXIRT_STIM_GEN) $(STIM_NUM_TX) $(STIM_MIN_LEN) $(STIM_MAX_LEN) 1 $$s > $(VSIM_STIMULI)/axi_rt_unit_$$f.writes.txt; \
 	done
 
-$(VSIM_RUN)/compile.axirt.vsim.tcl: $(AXIRTVSIMROOT)/vsim.mk
+$(VSIM_RUN)/compile.axirt.vsim.tcl: $(BENDER_YML) $(BENDER_LOCK) $(AXIRTVSIMROOT)/vsim.mk
 	mkdir -p $(VSIM_RUN)
-	$(BENDER) script vsim -t test --vlog-arg="$(VLOG_ARGS)" > $@
+	echo 'set ROOT [file normalize [file dirname [info script]]/../../..]' > $@
+	$(BENDER) script vsim -t test --vlog-arg="$(VLOG_ARGS)" | grep -v "set ROOT" >> $@
+	echo >> $@
 
 axirt-vsim-compile: $(VSIM_RUN)/compile.axirt.vsim.tcl axirt-vsim-gen-stimuli
 	cd $(VSIM_RUN) && $(VSIM) -c $(VSIM_FLAGS) -do "source $<; quit"

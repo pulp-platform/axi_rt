@@ -11,8 +11,8 @@ export_include_dirs:
   - include
 
 dependencies:
-  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.32.0 }
-  axi:                { git: "https://github.com/pulp-platform/axi.git",                version: 0.39.1 }
+  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.39.0 }
+  axi:                { git: "https://github.com/pulp-platform/axi.git",                version: 0.39.10 }
   register_interface: { git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.2  }
 
 sources:
@@ -22,15 +22,12 @@ sources:
 
   # Level 0
   - src/regs/axi_rt_reg_pkg.sv
-  - src/axi_gran_burst_splitter_counters.sv
   - src/axi_rt_unit_counter.sv
   - src/axi_rt_err_slv.sv
   - src/axi_rt_regbus_guard.sv
   # Level 1
   - src/regs/axi_rt_reg_top.sv
-  - src/axi_gran_burst_splitter_ax_chan.sv
   # Level 2
-  - src/axi_gran_burst_splitter.sv
   - src/axi_write_buffer.sv
   # Level 3
   - src/axi_rt_unit.sv

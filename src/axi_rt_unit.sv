@@ -254,9 +254,10 @@ module axi_rt_unit #(
     .isolated_o ( fragm_len_update         )
   );
 
-  axi_gran_burst_splitter #(
+  axi_burst_splitter_gran #(
     .MaxReadTxns   ( NumPending         ),
     .MaxWriteTxns  ( NumPending         ),
+    .FullBW        ( 1'b1               ),
     .AddrWidth     ( AddrWidth          ),
     .DataWidth     ( DataWidth          ),
     .IdWidth       ( IdWidth            ),
@@ -270,7 +271,7 @@ module axi_rt_unit #(
     .axi_b_chan_t  ( b_chan_t           ),
     .axi_ar_chan_t ( ar_chan_t          ),
     .axi_r_chan_t  ( r_chan_t           )
-  ) i_axi_gran_burst_splitter (
+  ) i_axi_burst_splitter_gran (
     .clk_i,
     .rst_ni,
     .len_limit_i  ( fragm_len       ),
