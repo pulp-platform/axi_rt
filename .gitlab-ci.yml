@@ -1,0 +1,26 @@
+# Copyright 2026 ETH Zurich and University of Bologna.
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+
+# Author: Gianluca Bellocchi <gianluca.bellocchi@unimore.it>
+
+variables:
+  QUESTA_SEPP: questa-2025.1
+  BENDER: bender
+  BENDER_GIT_SUBMODULES: false
+
+default:
+  interruptible: true
+
+stages:
+  - build
+
+compile-vsim:
+  stage: build
+  script:
+    - make axirt-vsim-compile | tee compile.log 2>&1
+    - '! grep "\*\* Error" compile.log'
+  artifacts:
+    paths:
+      - target/vsim/run/
+    expire_in: 1 day
