@@ -19,6 +19,7 @@ module axi_rt_unit #(
   parameter int unsigned NumRules           = 32'd0,
   parameter int unsigned PeriodWidth        = 32'd0,
   parameter int unsigned BudgetWidth        = 32'd0,
+  parameter int unsigned AxiSizeWidth       = 32'd0,
   parameter bit          CutSplitterPaths   =  1'b0,
   parameter bit          DisableSplitChecks =  1'b0,
   parameter bit          CutDecErrors       =  1'b0,
@@ -85,7 +86,7 @@ module axi_rt_unit #(
 
 
   /// the maximum amount of bytes one AXI transfer can have
-  localparam int unsigned NumBytesWidth  =  axi_pkg::LenWidth + axi_pkg::SizeWidth + 32'd1;
+  localparam int unsigned NumBytesWidth  =  axi_pkg::LenWidth + AxiSizeWidth + 32'd1;
 
   /// index with of the regions
   parameter int unsigned NumRegionWidth  = cf_math_pkg::idx_width(NumAddrRegions);
