@@ -10,7 +10,8 @@ PYTHON  	  ?= python3
 BENDER   	  ?= bender
 
 # QuestaSim options
-VSIM 		 ?= vsim
+QUESTA_SEPP  ?=
+VSIM 		 ?= $(QUESTA_SEPP) vsim
 
 VSIM_SRC  	 = $(AXIRTVSIMROOT)/src
 VSIM_STIMULI = $(AXIRTVSIMROOT)/stimuli
