@@ -23,6 +23,7 @@ module axi_rt_unit #(
   parameter bit          CutSplitterPaths   =  1'b0,
   parameter bit          DisableSplitChecks =  1'b0,
   parameter bit          CutDecErrors       =  1'b0,
+  parameter bit          UseWriteBuffer     =  1'b0,
   parameter type         rt_rule_t          = logic,
   parameter type         aw_chan_t          = logic,
   parameter type         w_chan_t           = logic,
@@ -254,23 +255,28 @@ module axi_rt_unit #(
   // --------------------------------------------------
   // Buffer Transactions
   // --------------------------------------------------
-  axi_write_buffer #(
-    .NumOutstanding ( NumPending   ),
-    .WBufferDepth   ( WBufferDepth ),
-    .aw_chan_t      ( aw_chan_t    ),
-    .w_chan_t       ( w_chan_t     ),
-    .axi_req_t      ( axi_req_t    ),
-    .axi_resp_t     ( axi_resp_t   )
-  ) i_axi_write_buffer (
-    .clk_i,
-    .rst_ni,
-    .slv_req_i       ( cut_req          ),
-    .slv_resp_o      ( cut_resp         ),
-    .mst_req_o       ( fwd_req          ),
-    .mst_resp_i      ( fwd_resp         ),
-    .num_w_stored_o  ( num_w_pending_o  ),
-    .num_aw_stored_o ( num_aw_pending_o )
-  );
+  if (UseWriteBuffer) begin: gen_w_buffer
+    axi_write_buffer #(
+      .NumOutstanding ( NumPending   ),
+      .WBufferDepth   ( WBufferDepth ),
+      .aw_chan_t      ( aw_chan_t    ),
+      .w_chan_t       ( w_chan_t     ),
+      .axi_req_t      ( axi_req_t    ),
+      .axi_resp_t     ( axi_resp_t   )
+    ) i_axi_write_buffer (
+      .clk_i,
+      .rst_ni,
+      .slv_req_i       ( cut_req          ),
+      .slv_resp_o      ( cut_resp         ),
+      .mst_req_o       ( fwd_req          ),
+      .mst_resp_i      ( fwd_resp         ),
+      .num_w_stored_o  ( num_w_pending_o  ),
+      .num_aw_stored_o ( num_aw_pending_o )
+    );
+  end else begin : gen_no_w_buffer
+    assign fwd_req       = cut_req;
+    assign cut_resp      = fwd_resp;
+  end
 
 
   // --------------------------------------------------
