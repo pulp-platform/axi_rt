@@ -43,7 +43,7 @@ VSIM_COMMON_CMD = log -r /*; run -a;
 TB_DUT ?= tb_axi_rt_unit_top
 
 # Stimuli generation
-AXIRT_STIM_GEN     = $(AXIRTVSIMROOT)/../../scripts/gen_stimuli.py
+AXIRT_STIM_GEN     = $(AXIRTVSIMROOT)/scripts/gen_stimuli.py
 STIM_NUM_MASTERS  ?= 2
 STIM_NUM_TX       ?= 4
 STIM_MIN_LEN      ?= 15
