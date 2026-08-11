@@ -38,7 +38,9 @@ VSIM_FLAGS += -voptargs=+vpi
 
 VSIM_FLAGS_GUI = -voptargs=+acc
 
-VSIM_COMMON_CMD = log -r /*; run -a;
+VSIM_GUI_TCL   = $(AXIRTVSIMROOT)/scripts/start.vsim.tcl
+
+VSIM_BATCH_CMD = log -r /*; run -a;
 
 TB_DUT ?= tb_axi_rt_unit_top
 
@@ -70,10 +72,10 @@ axirt-vsim-compile: $(VSIM_RUN)/compile.axirt.vsim.tcl axirt-vsim-gen-stimuli
 	cd $(VSIM_RUN) && $(VSIM) -c $(VSIM_FLAGS) -do "source $<; quit"
 
 axirt-vsim-run: axirt-vsim-compile
-	cd $(VSIM_RUN) && $(VSIM) $(VSIM_FLAGS) $(VSIM_FLAGS_GUI) +STIM_DIR=$(VSIM_STIMULI) $(TB_DUT) -do "$(VSIM_COMMON_CMD)"
+	cd $(VSIM_RUN) && $(VSIM) $(VSIM_FLAGS) $(VSIM_FLAGS_GUI) +STIM_DIR=$(VSIM_STIMULI) $(TB_DUT) -do "source $(VSIM_GUI_TCL)"
 
 axirt-vsim-run-batch: axirt-vsim-compile
-	cd $(VSIM_RUN) && $(VSIM) -c $(VSIM_FLAGS) +STIM_DIR=$(VSIM_STIMULI) $(TB_DUT) -do "$(VSIM_COMMON_CMD) quit"
+	cd $(VSIM_RUN) && $(VSIM) -c $(VSIM_FLAGS) +STIM_DIR=$(VSIM_STIMULI) $(TB_DUT) -do "$(VSIM_BATCH_CMD) quit"
 
 axirt-vsim-clean:
 	rm -rf $(VSIM_RUN)
