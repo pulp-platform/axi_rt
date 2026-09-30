@@ -1,0 +1,80 @@
+// Copyright 2025 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
+// Licensed under Solderpad Hardware License, Version 0.51, see LICENSE for details.
+
+
+{
+  name: "axi_tmu"
+  clock_primary: "clk_i"
+  bus_interfaces: [
+    { protocol: "reg_iface", direction: "device" }
+  ]
+  regwidth: "32",
+  registers: [
+  { name:     "budget_avld_ardy"
+    desc:     "time budget from axvld to axrdy"
+    swaccess: "wo"
+    hwaccess: "hro"
+    resval:   "0"
+    fields: [
+      { bits: "7:0", name: "budget_avld_ardy", desc: "time budget from axvld to axrdy" }
+    ]
+  },
+
+  { name:     "budget_w_liveness"
+    desc:     "time budget for liveness check for write txns"
+    swaccess: "wo"
+    hwaccess: "hro"
+    resval:   "0"
+    fields: [
+      { bits: "7:0", name: "budget_w_liveness", desc: "time budget for liveness check for write txns" }
+    ]
+  },
+  
+  { name:     "budget_b"
+    desc:     "time budget for b for write txns"
+    swaccess: "wo"
+    hwaccess: "hro"
+    resval:   "0"
+    fields: [
+      { bits: "7:0", name: "budget_b", desc: "time budget for b for write txns" }
+    ]
+  },
+
+  { name:     "budget_r_liveness"
+    desc:     "time budget for liveness check for read txns"
+    swaccess: "wo"
+    hwaccess: "hro"
+    resval:   "0"
+    fields: [
+      { bits: "7:0", name: "budget_r_liveness", desc: "time budget for liveness check for read txns" }
+    ]
+  },
+
+  { name:     "reset"
+    desc:     "Is the sbr requested to be reset?"
+    swaccess: "ro"
+    hwaccess: "hwo"
+    resval: "0"
+    fields: [
+      { bits: "0:0", name: "reset", desc: "Is the sbr requested to be reset?" }
+    ]
+  },
+
+  { name: "fault_log",
+    desc: "fault logs",
+    swaccess: "rw",
+    hwaccess: "hrw",
+    fields: [
+      { bits: "0", name: "fault_valid", desc: "there is a fault detected", resval: "0" },
+      { bits: "3:1", name: "fault_type", desc: "fault type (enum tmu_fault_type_t)", resval: "0" },
+      { bits: "4", name: "fault_dir", desc: "fault direction (0=read, 1=write)", resval: "0" },
+      { bits: "8:5", name: "fault_phase", desc: "phase where fault occurred", resval: "0" },
+      { bits: "24:9", name: "fault_id", desc: "id of the faulty transaction", resval: "0" },
+
+    ]
+  },
+  ]
+}
+
