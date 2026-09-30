@@ -1,0 +1,61 @@
+# Copyright 2025 ETH Zurich and University of Bologna.
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+
+# Chaoqun Liang <chaoqun.liang@unibo.it>
+
+package:
+  name: axi_tmu
+
+export_include_dirs:
+  - include
+
+dependencies:
+  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git",       version: 1.32.0 }
+  axi:                { git: "https://github.com/pulp-platform/axi.git",                version: 0.39.1 }
+  register_interface: { git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.2  }
+
+
+sources:
+  # Source files grouped in levels. Files in level 0 have no dependencies on files in this
+  # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
+  # levels 1 and 0, etc. Files within a level are ordered alphabetically.
+
+  - target: rtl
+    files:
+      # Level 0
+      - src/registers/axi_tmu_reg_pkg.sv
+      - src/registers/axi_tmu_reg_top.sv
+      - src/timebase.sv
+      - src/axi_tmu_pkg.sv
+      - src/tmu_wr_inflight.sv
+      - src/tmu_rd_inflight.sv
+      - src/sticky.sv
+      - src/tmu_hs_counter.sv
+      - src/write_guard.sv
+      - src/read_guard.sv
+      - src/tmu_id_remap.sv
+      - src/axi_tmu_top.sv
+
+  - target: tmu_synth
+    files:
+      - src/axi_tmu_pkg.sv
+      #- src/axi_tmu_top.sv
+      - src/tmu_wrap.sv
+
+  - target: netlist_sim
+    files:
+      - /usr/pack/gf-12-kgf/arm/gf/12lpplus/sc7p5mcpp84_base_lvt_c18/r5p0/verilog/sc7p5mcpp84_12lpplus_base_lvt_c18.v
+      - monitor-synth/synopsys/out/tmu_wrap_sspg_0p72v_125c_1ns/netlist_tmu_wrap.v
+      - test/tb_axi_tmu.sv
+
+  - target: tmu_test
+    files:
+       # Level 0
+      - test/tb_axi_tmu.sv
+  
+  - target: ZOIX
+    files:
+      - test/tb_axi_tmu.sv
+    include_dirs:
+      - fault_sim

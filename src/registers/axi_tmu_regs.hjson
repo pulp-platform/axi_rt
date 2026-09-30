@@ -1,0 +1,228 @@
+// Copyright 2025 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
+// Licensed under Solderpad Hardware License, Version 0.51, see LICENSE for details.
+
+{
+  name: "axi_tmu"
+  clock_primary: "clk_i"
+  bus_interfaces: [
+    { protocol: "reg_iface", direction: "device" }
+  ]
+
+  regwidth: "32",
+  registers: [
+  { name: "budget_awvld_awrdy",
+    desc: "time budget from awvld to awrdy",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval: "0",
+    fields: [
+      { bits: "7:0", name: "budget_awvld_awrdy", desc: "time budget from awvld to awrdy" }
+    ]
+  },
+
+  { name:     "budget_awhs_wfirst",
+    desc:     "time budget from awhs to wfirst",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_awhs_wfirst", desc: "time budget from awhs to wfirst" }
+    ]
+  },
+
+  { name:     "budget_wvld_wrdy",
+    desc:     "time budget from wvld to wrdy",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_wvld_wrdy", desc: "time budget from wvld to wrdy" }
+    ]
+  },
+
+  { name:     "budget_w_liveness",
+    desc:     "time budget from one w beat to next",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_w_liveness", desc: "time budget from one w beat to next" }
+    ]
+  },
+
+  { name:     "budget_wlast_bvld",
+    desc:     "time budget from wlast to bvld",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_wlast_bvld", desc: "time budget from wlast to bvld" }
+    ]
+  },
+
+  { name:     "budget_bvld_brdy",
+    desc:     "time budget from bvld to brdy",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_bvld_brdy", desc: "time budget from bvld to brdy" }
+    ]
+  },
+
+  { name:     "budget_arvld_arrdy",
+    desc:     "time budget from arvld to arrdy",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_arvld_arrdy", desc: "time budget from arvld to arrdy" }
+    ]
+  },
+
+  { name:     "budget_rvld_rrdy",
+    desc:     "time budget from rvld to rrdy",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_rvld_rrdy", desc: "time budget from rvld to rrdy" }
+    ]
+  },
+
+  { name:     "budget_arhs_rfirst",
+    desc:     "time budget from ar hs to rvalid first",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_arhs_rfirst", desc: "time budget from ar hs to rvalid" }
+    ]
+  },
+
+  { name:     "budget_r_liveness",
+    desc:     "time budget from one r beat to next",
+    swaccess: "wo",
+    hwaccess: "hro",
+    resval:   "0",
+    fields: [
+      { bits: "7:0", name: "budget_r_liveness", desc: "time budget from one r beat to next" }
+    ]
+  },
+
+  { name: "reset",
+    desc: "Is this subordinate device requested to be reset?",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval: "0",
+    fields: [
+      { bits: "0:0", name: "reset", desc: "Is this subordinate device requested to be reset?" }
+    ]
+  },
+
+  { name: "fault_log",
+    desc: "fault logs",
+    swaccess: "rw",
+    hwaccess: "hrw",
+    fields: [
+      { bits: "0", name: "fault_valid", desc: "there is a fault detected", resval: "0" },
+      { bits: "3:1", name: "fault_type", desc: "fault type (enum tmu_fault_type_t)", resval: "0" },
+      { bits: "4", name: "fault_dir", desc: "fault direction (0=read, 1=write)", resval: "0" },
+      { bits: "8:5", name: "fault_phase", desc: "phase where fault occurred", resval: "0" },
+      { bits: "24:9", name: "fault_id", desc: "id of the faulty transaction", resval: "0" }
+    ]
+  },
+
+  { name:     "latency_awvld_wfirst",
+    desc:     "latency from awvld to wfirst",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_awvld_wfirst", desc: "latency from awvld to wfirst" }
+    ]
+  },
+
+  { name:     "latency_wvld_wrdy",
+    desc:     "latency from wvld to wrdy",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_wvld_wrdy", desc: "latency from wvld to wrdy" }
+    ]
+  },
+
+  { name:     "latency_wvld_wlast",
+    desc:     "latency from wvld to wlast",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_wvld_wlast", desc: "latency from wvld to wlast" }
+    ]
+  },
+
+  { name:     "latency_wlast_bvld",
+    desc:     "latency from wlast to bvld",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_wlast_bvld", desc: "latency from wlast to bvld" }
+    ]
+  },
+
+  { name:     "latency_bvld_brdy",
+    desc:     "latency from bvld to brdy",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_bvld_brdy", desc: "latency from bvld to brdy" }
+    ]
+  },
+
+  { name:     "latency_arvld_arrdy",
+    desc:     "latency from arvld to arrdy",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_arvld_arrdy", desc: "latency from arvld to arrdy" }
+    ]
+  },
+
+  { name:     "latency_arvld_rvld",
+    desc:     "latency from arvld to rvld",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_arvld_rvld", desc: "latency from arvld to rvld" }
+    ]
+  },
+
+  { name:     "latency_rvld_rrdy",
+    desc:     "latency from rvld to rrdy",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_rvld_rrdy", desc: "latency from rvld to rrdy" }
+    ]
+  },
+
+  { name:     "latency_rvld_rlast",
+    desc:     "latency from rvld to rlast",
+    swaccess: "ro",
+    hwaccess: "hrw",
+    resval:   "0",
+    fields: [
+      { bits: "9:0", name: "latency_rvld_rlast", desc: "latency from rvld to rlast" }
+    ]
+  }
+  ]
+}
